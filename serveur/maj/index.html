@@ -455,23 +455,71 @@ function makeServerDb(){const ls=new Set();
  const col=p=>{const get=()=>api("GET","api/col?p="+enc(p)).then(a=>{const docs=(a||[]).map(x=>snap(x.id,x.data));return{docs,size:docs.length,empty:!docs.length}});
   return{path:p,doc:id=>doc(p+"/"+id),get,onSnapshot:(n,e)=>listen(q=>q.slice(0,q.lastIndexOf("/"))===p,get,n,e)}};
  return{doc,collection:col}}
-async function srvDetect(){if(!/^https?:$/.test(location.protocol))return false;try{const r=await fetch("api/ping",{cache:"no-store"});if(!r.ok)return false;const j=await r.json();if(!j||!j.ok)return false;SRV.on=true;SRV.needTable=!!j.needTable;SRV.publicUrl=j.publicUrl||"";return true}catch(e){return false}}
-async function srvLogin(){const j=await api("POST","api/login");SRV.isMJ=!!j.mj;SRV.pid=j.pid;SRV.created=!!j.created;srvSave();return j}
-function renderLogin(err){return `<div class="col" style="max-width:520px;margin:20px auto"><section class="box"><h2>Rejoindre la table</h2>
- <p class="small muted">Première connexion : choisissez votre nom de joueur et un code secret. Ils vous serviront à retrouver vos fiches sur n’importe quel appareil.</p>
- ${SRV.needTable?`<label class="f">Code de la table<input id="lg-table" value="${esc(SRV.table)}" autocomplete="off" placeholder="Donné par votre MJ"></label>`:""}
- <div class="row" style="margin-top:10px"><label class="f">Nom de joueur<input id="lg-name" value="${esc(SRV.name)}" autocomplete="username" maxlength="20" placeholder="Ex. : Kevin"></label>
- <label class="f">Code secret<input id="lg-pin" type="password" value="" autocomplete="current-password" placeholder="4 caractères minimum"></label></div>
- <details class="fold"><summary>Je suis le MJ</summary><label class="f" style="margin-top:8px">Code MJ<input id="lg-mj" type="password" value="${esc(SRV.mj)}" autocomplete="off"></label></details>
- ${err?`<p class="warn" style="margin-top:10px">${esc(err)}</p>`:""}
- <button class="btn pri" data-act="srvlogin" style="margin-top:14px">Entrer</button>
- <p class="small muted" style="margin-top:10px">Code secret oublié ? Demandez au MJ de le réinitialiser.</p></section></div>`}
-async function srvTryLogin(){const g=id=>{const e=document.getElementById(id);return e?e.value.trim():null};
- const t=g("lg-table"),m=g("lg-mj"),n=g("lg-name"),p=g("lg-pin");if(t!==null)SRV.table=t;if(m!==null)SRV.mj=m;if(n!==null)SRV.name=n;if(p!==null)SRV.pin=p;
- if(SRV.name.length<2){document.getElementById("main").innerHTML=renderLogin("Choisissez un nom de joueur (2 caractères minimum).");return}
- if(SRV.pin.length<4){document.getElementById("main").innerHTML=renderLogin("Le code secret doit faire au moins 4 caractères.");return}
- try{await srvLogin();SRV.login=false;if(SRV.created)toast("Bienvenue "+SRV.name+" ! Retenez bien votre code secret.");connect()}catch(e){if(e.code===401&&SRV.mj&&/MJ/.test(e.message)){SRV.mj=""}document.getElementById("main").innerHTML=renderLogin(e.message||"Connexion impossible.")}}
+async function srvDetect(){if(!/^https?:$/.test(location.protocol))return false;try{const r=await fetch("api/ping",{cache:"no-store"});if(!r.ok)return false;const j=await r.json();if(!j||!j.ok)return false;SRV.on=true;SRV.needTable=!!j.needTable;SRV.publicUrl=j.publicUrl||"";SRV.open=j.open!==false;SRV.v=j.v||1;return true}catch(e){return false}}
+async function srvLogin(mode){const j=await fetch("api/login",{method:"POST",headers:{"X-Table":SRV.table,"X-MJ":SRV.mj,"X-Player":encodeURIComponent(SRV.name),"X-Pin":SRV.pin,"X-Mode":mode||"login"},cache:"no-store"}).then(async r=>{const j=await r.json().catch(()=>null);if(!r.ok)throw{code:r.status,message:(j&&j.error)||"Erreur "+r.status};return j});
+ SRV.isMJ=!!j.mj;SRV.pid=j.pid;SRV.name=j.name||SRV.name;SRV.created=!!j.created;SRV.mustChange=!!j.mustChange;SRV.hasRecovery=!!j.hasRecovery||!!j.recovery;srvSave();return j}
+const lgv=id=>{const e=document.getElementById(id);return e?e.value.trim():null};
+const lgraw=id=>{const e=document.getElementById(id);return e?e.value:null};
+function lgShow(err){SRV.err=err||"";document.getElementById("main").innerHTML=renderLogin()}
+function renderLogin(){const err=SRV.err;SRV.err="";const scr=SRV.screen||"login";
+ if(scr==="recovery")return renderRecovery();
+ if(scr==="change")return `<div class="col" style="max-width:520px;margin:20px auto"><section class="box"><h2>Nouveau mot de passe</h2>
+  <p class="small muted">Le MJ vous a donné un code provisoire. Choisissez maintenant votre propre mot de passe, ${esc(SRV.name)}.</p>
+  <div class="row" style="margin-top:10px"><label class="f">Nouveau mot de passe<input id="lg-new" type="password" autocomplete="new-password" placeholder="4 caractères minimum"></label>
+  <label class="f">Confirmer le mot de passe<input id="lg-new2" type="password" autocomplete="new-password"></label></div>
+  ${err?`<p class="warn" style="margin-top:10px">${esc(err)}</p>`:""}
+  <button class="btn pri" data-act="srvchange" style="margin-top:14px">Enregistrer</button></section></div>`;
+ const tab=(k,n)=>`<button class="${scr===k?"on":""}" data-act="lgtab" data-k="${k}">${n}</button>`;
+ const tbl=SRV.needTable?`<label class="f">Code de la table<input id="lg-table" value="${esc(SRV.table)}" autocomplete="off" placeholder="Donné par votre MJ"></label>`:"";
+ const name=`<label class="f">Nom de joueur<input id="lg-name" value="${esc(SRV.name)}" autocomplete="username" maxlength="20" placeholder="Ex. : Kevin"></label>`;
+ const mj=`<details class="fold"><summary>Je suis le MJ</summary><label class="f" style="margin-top:8px">Code MJ<input id="lg-mj" type="password" value="${esc(SRV.mj)}" autocomplete="off"></label></details>`;
+ let body;
+ if(scr==="create")body=`<p class="small muted">Choisissez votre nom de joueur et un mot de passe. Ils vous serviront à retrouver vos fiches sur tous vos appareils.</p>${SRV.open===false?`<p class="warn">Les inscriptions sont fermées pour le moment. Demandez au MJ de les ouvrir.</p>`:""}
+  ${tbl}<div style="margin-top:10px">${name}</div>
+  <div class="row" style="margin-top:10px"><label class="f">Mot de passe<input id="lg-pin" type="password" autocomplete="new-password" placeholder="4 caractères minimum"></label>
+  <label class="f">Confirmer le mot de passe<input id="lg-pin2" type="password" autocomplete="new-password" placeholder="Retapez-le"></label></div>${mj}
+  ${err?`<p class="warn" style="margin-top:10px">${esc(err)}</p>`:""}<button class="btn pri" data-act="srvcreate" style="margin-top:14px">Créer mon compte</button>`;
+ else if(scr==="forgot")body=`<p class="small muted">Entrez le code de récupération reçu à la création de votre compte, puis choisissez un nouveau mot de passe. Pas de code ? Le MJ peut vous donner un code provisoire.</p>
+  ${tbl}<div class="row" style="margin-top:10px">${name}<label class="f">Code de récupération<input id="lg-rec" autocomplete="off" placeholder="XXXX-XXXX-XXXX" style="text-transform:uppercase"></label></div>
+  <div class="row" style="margin-top:10px"><label class="f">Nouveau mot de passe<input id="lg-pin" type="password" autocomplete="new-password" placeholder="4 caractères minimum"></label>
+  <label class="f">Confirmer le mot de passe<input id="lg-pin2" type="password" autocomplete="new-password"></label></div>
+  ${err?`<p class="warn" style="margin-top:10px">${esc(err)}</p>`:""}<button class="btn pri" data-act="srvrecover" style="margin-top:14px">Changer mon mot de passe</button>`;
+ else body=`${tbl}<div class="row" style="margin-top:10px">${name}<label class="f">Mot de passe<input id="lg-pin" type="password" autocomplete="current-password"></label></div>${mj}
+  ${err?`<p class="warn" style="margin-top:10px">${esc(err)}</p>`:""}<button class="btn pri" data-act="srvlogin" style="margin-top:14px">Entrer</button>
+  <p class="small muted" style="margin-top:10px">Mot de passe oublié ? <a href="#" data-act="lgtab" data-k="forgot">Le récupérer</a>.</p>`;
+ return `<div class="col" style="max-width:560px;margin:20px auto"><section class="box"><h2>Rejoindre la table</h2>
+  <nav class="tabs" style="margin-bottom:12px">${tab("login","Connexion")}${tab("create","Inscription")}${tab("forgot","Oublié ?")}</nav>${body}</section></div>`}
+function renderRecovery(){const c=SRV.recCode||"";
+ return `<div class="col" style="max-width:560px;margin:20px auto"><section class="box"><h2>Votre code de récupération</h2>
+  <p>Notez ce code et gardez-le en lieu sûr. Il est le seul moyen de récupérer votre compte si vous oubliez votre mot de passe. Il ne sera plus jamais affiché.</p>
+  <div style="font:700 1.7rem var(--f-display);letter-spacing:.12em;text-align:center;padding:16px;margin:14px 0;border:1px dashed var(--gold,#e8b84e);border-radius:10px;user-select:all">${esc(c)}</div>
+  <div class="flexgap"><button class="btn sm" data-act="reccopy">Copier</button><button class="btn sm" data-act="recdl">Télécharger en .txt</button></div>
+  <label class="flexgap" style="margin-top:14px;align-items:center;flex-wrap:nowrap;cursor:pointer"><input type="checkbox" id="rec-ok" style="width:20px;height:20px;flex:none" onchange="document.getElementById('rec-go').disabled=!this.checked"> J’ai bien noté mon code de récupération</label>
+  <button class="btn pri" id="rec-go" data-act="recdone" style="margin-top:12px" disabled>Continuer</button></section></div>`}
+function lgCommon(){const t=lgv("lg-table"),m=lgv("lg-mj"),n=lgv("lg-name");if(t!==null)SRV.table=t;if(m!==null)SRV.mj=m;if(n!==null)SRV.name=n;
+ if(SRV.name.length<2){lgShow("Choisissez un nom de joueur (2 caractères minimum).");return false}return true}
+function lgPair(a,b){const p=lgraw(a)||"",q=lgraw(b);if(p.length<4){lgShow("Le mot de passe doit faire au moins 4 caractères.");return null}if(q!==null&&p!==q){lgShow("Les deux mots de passe ne correspondent pas.");return null}return p}
+async function afterAuth(){SRV.login=false;SRV.screen="login";if(SRV.mustChange){SRV.login=true;SRV.screen="change";lgShow();return}connect()}
+async function srvTryLogin(){if(!lgCommon())return;SRV.pin=lgraw("lg-pin")||"";if(SRV.pin.length<4){lgShow("Entrez votre mot de passe.");return}
+ try{await srvLogin("login");afterAuth()}catch(e){if(e.code===401&&SRV.mj&&/MJ/.test(e.message))SRV.mj="";lgShow(e.message||"Connexion impossible.")}}
+async function srvTryCreate(){if(!lgCommon())return;const p=lgPair("lg-pin","lg-pin2");if(!p)return;SRV.pin=p;
+ try{const j=await srvLogin("create");toast("Bienvenue "+SRV.name+" !");SRV.recCode=j.recovery;SRV.screen="recovery";SRV.login=true;lgShow()}catch(e){if(e.code===401&&SRV.mj&&/MJ/.test(e.message))SRV.mj="";lgShow(e.message||"Création impossible.")}}
+async function srvTryRecover(){if(!lgCommon())return;const code=lgv("lg-rec")||"";if(code.replace(/[^a-z0-9]/gi,"").length!==12){lgShow("Le code de récupération fait 12 caractères.");return}const p=lgPair("lg-pin","lg-pin2");if(!p)return;
+ try{const j=await fetch("api/recover",{method:"POST",headers:{"Content-Type":"application/json","X-Table":SRV.table},body:JSON.stringify({name:SRV.name,code,pin:p}),cache:"no-store"}).then(async r=>{const j=await r.json().catch(()=>null);if(!r.ok)throw{message:(j&&j.error)||"Erreur "+r.status};return j});
+  SRV.pin=p;await srvLogin("login");toast("Mot de passe changé.");SRV.recCode=j.recovery;SRV.screen="recovery";SRV.login=true;lgShow()}catch(e){lgShow(e.message||"Récupération impossible.")}}
+async function srvTryChange(){const p=lgPair("lg-new","lg-new2");if(!p)return;
+ try{const j=await api("POST","api/account/pin",{pin:p});SRV.pin=p;srvSave();await srvLogin("login");if(j.recovery){SRV.recCode=j.recovery;SRV.screen="recovery";lgShow();return}afterAuth()}catch(e){lgShow(e.message||"Échec.")}}
+function recFile(){const t="Table Daggerheart\nJoueur : "+SRV.name+"\nCode de récupération : "+SRV.recCode+"\n\nGardez ce fichier en lieu sûr. Il permet de changer votre mot de passe si vous l’oubliez.\n";const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/plain"}));a.download="daggerheart-recuperation-"+(SRV.name||"joueur")+".txt";document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
 function srvLogout(){SRV.mj="";SRV.pin="";srvSave();location.reload()}
+/* Mon compte */
+function renderAccount(){if(!SRV.on||SRV.login)return"";const open=SRV.acct;
+ return `<div class="note"><div class="flexgap" style="justify-content:space-between"><span>Connecté en tant que <b>${esc(SRV.name)}</b>${SRV.isMJ?" (MJ)":""}.</span><span class="flexgap"><button class="btn sm" data-act="acct">Mon compte</button><button class="btn sm" data-act="srvlogout">Se déconnecter</button></span></div>
+  ${!SRV.hasRecovery?`<p class="warn" style="margin-top:8px">Votre compte n’a pas encore de code de récupération. <button class="btn sm" data-act="newrec">En créer un</button></p>`:""}
+  ${open?`<div style="margin-top:10px"><div class="row"><label class="f">Nouveau mot de passe<input id="ac-pin" type="password" autocomplete="new-password"></label><label class="f">Confirmer<input id="ac-pin2" type="password" autocomplete="new-password"></label></div>
+  <div class="flexgap" style="margin-top:8px"><button class="btn sm pri" data-act="acpin">Changer mon mot de passe</button><button class="btn sm" data-act="newrec">Nouveau code de récupération</button></div></div>`:""}</div>`}
+async function accPin(){const p=lgraw("ac-pin")||"",q=lgraw("ac-pin2");if(p.length<4){toast("4 caractères minimum.");return}if(p!==q){toast("Les deux mots de passe ne correspondent pas.");return}
+ try{await api("POST","api/account/pin",{pin:p});SRV.pin=p;srvSave();toast("Mot de passe changé.");setTimeout(()=>location.reload(),900)}catch(e){toast(e.message||"Échec.")}}
+async function accRec(){try{const j=await api("POST","api/account/recovery");SRV.recCode=j.recovery;SRV.hasRecovery=true;SRV.screen="recovery";SRV.login=true;SRV.back=true;render()}catch(e){toast(e.message||"Échec.")}}
 
 async function connect(){
  try{let d,u;if(SRV.on){d=makeServerDb();u={id:async()=>SRV.pid,canEdit:async()=>SRV.isMJ}}else{if(!window.claude||!window.claude.use)return;[d,u]=await Promise.all([claude.use("db"),claude.use("user")])}if(!d||!u)return;db=d;usr=u;
@@ -680,7 +728,7 @@ function renderHome(){
  const card=c=>{const cl=CLASSES[c.classe];return `<button class="pc" data-open="${c.id}"><div class="pimg">${portrait(c)}<div class="pname"><span>${cl?cl.n:""}${c.sub&&cl?" &middot; "+cl.subs[c.sub].n:""} &middot; Niv. ${c.level}</span><b>${esc(c.name||"Sans nom")}</b></div></div><div class="pbody"><span class="small muted">${c.anc1?ANC[c.anc1].n:""}${c.comm?" &middot; "+COMM[c.comm].n:""}</span>${bars(c)}${c.example?`<span class="chip">Exemple</span>`:""}</div></button>`};
  return `<div class="col">
   ${L.mode==="local"?`<div class="note">Mode local : vos personnages restent dans ce navigateur. Ouvrez la page depuis claude.ai, connecté, pour partager la table avec le groupe et le MJ.</div>`:""}
-  ${SRV.on&&!SRV.login?`<div class="note"><div class="flexgap" style="justify-content:space-between"><span>Connecté en tant que <b>${esc(SRV.name)}</b>${SRV.isMJ?" (MJ)":""}. Votre nom et votre code secret fonctionnent sur tous vos appareils.</span><button class="btn sm" data-act="srvlogout">Se déconnecter</button></div></div>`:""}
+  ${renderAccount()}
   ${SRV.on&&SRV.isMJ&&SRV.publicUrl?`<div class="note fear"><div class="flexgap" style="justify-content:space-between"><span>Adresse à partager avec les joueurs : <b>${esc(SRV.publicUrl)}</b><br><span class="small muted">Elle change à chaque redémarrage du serveur.</span></span><button class="btn sm" data-act="copyurl">Copier</button></div></div>`:""}
   ${publicStrip()}
   <section class="box"><div class="flexgap" style="justify-content:space-between;margin-bottom:12px"><h2 style="margin:0">Mes personnages</h2><div class="flexgap">${L.wiz?`<button class="btn" data-act="resume">Reprendre la création</button>`:""}<button class="btn" data-act="dlall">Télécharger mes fiches</button><button class="btn pri" data-act="newwiz">Créer un personnage</button></div></div>
@@ -906,8 +954,8 @@ function importData(txt){try{let x=JSON.parse(txt);if(x&&x.chars)x=x.chars;x=Arr
 /* =================== VUE MJ =================== */
 const GTABS=[["table","Table"],["rencontre","Rencontre"],["regles","Règles"],["notes","Notes privées"]];
 function renderGM(){if(!L.me.canEdit)return `<div class="note fear">L’espace MJ est réservé au propriétaire et aux éditeurs de cette page.</div>`;
- const tab={table:gTable,rencontre:gEnc,regles:gRules,notes:gNotes}[L.gtab]||gTable;
- return `<nav class="tabs">${GTABS.map(([k,n])=>`<button class="${L.gtab===k?"on":""}" data-gtab="${k}">${n}</button>`).join("")}</nav>${tab()}`}
+ const tab={table:gTable,rencontre:gEnc,regles:gRules,notes:gNotes,admin:gAdmin}[L.gtab]||gTable;
+ return `<nav class="tabs">${(SRV.on?GTABS.concat([["admin","Admin"]]):GTABS).map(([k,n])=>`<button class="${L.gtab===k?"on":""}" data-gtab="${k}">${n}</button>`).join("")}</nav>${tab()}`}
 function pendingFear(){const t=L.table,cnt=t.counted||{};let n=0;L.chars.forEach(c=>(c.rolls||[]).forEach(r=>{if(r.fear&&r.ts&&r.ts>(cnt[c.id]||0))n++}));return n}
 function gTable(){const t=L.table;const pf=L.mode==="db"?pendingFear():0;
  return `<div class="grid"><div class="col"><section class="box"><h2>Peur : ${t.fear||0}/12</h2><div class="fearbig">${Array.from({length:12},(_,i)=>`<button class="slot ${i<(t.fear||0)?"on":""}" style="--c:var(--fear)" data-fear="${i}" aria-label="Peur ${i+1}"></button>`).join("")}</div>
@@ -915,7 +963,7 @@ function gTable(){const t=L.table;const pf=L.mode==="db"?pendingFear():0;
  <section class="box"><h2>Comptes à rebours</h2>${(t.cds||[]).map((x,i)=>`<div class="cd"><div style="min-width:0"><input data-tp="cds.${i}.name" value="${esc(x.name)}" aria-label="Nom"><div class="flexgap" style="margin-top:6px"><div class="slots">${Array.from({length:x.max},(_,j)=>`<button class="slot ${j<x.v?"on":""}" style="--c:var(--hope)" data-cd="${i}" data-i="${j}" aria-label="Case ${j+1}"></button>`).join("")}</div></div></div>
   <div class="flexgap" style="flex-direction:column"><label class="small flexgap"><input type="checkbox" data-tp="cds.${i}.pub" ${x.pub?"checked":""} style="width:auto">Public</label><button class="btn sm danger" data-act="delcd" data-i="${i}">✕</button></div></div>`).join("")||`<p class="small muted">Aucun compte à rebours.</p>`}
  <div class="flexgap"><input id="cdname" placeholder="Ex. : Le rituel s’achève" style="flex:1 1 180px"><input id="cdmax" type="number" value="6" min="1" max="12" style="width:70px" aria-label="Taille"><button class="btn sm" data-act="addcd">Ajouter</button></div></section></div>
- <div class="col"><section class="box"><h2>Personnages joueurs</h2>${L.chars.length?L.chars.map(c=>{const d=derive(c);if(!d)return"";return `<div class="item"><div class="itemhead"><b style="font:700 1.15rem var(--f-display)">${esc(c.name||"Sans nom")}</b><div class="flexgap">${SRV.on&&c.owner&&c.owner!==L.me.id?`<span class="small muted">Joueur : ${esc(c.owner.slice(2))}</span><button class="btn sm" data-act="resetpin" data-k="${esc(c.owner.slice(2))}">Réinit. code</button>`:""}<button class="btn sm" data-open="${c.id}">Fiche</button></div></div>${(c.effects||[]).filter(e=>e.on).length?`<div class="flexgap">${c.effects.filter(e=>e.on).map(e=>`<span class="chip" style="color:${+e.val<0||+e.adv<0?"var(--hp)":"var(--ok)"}">${esc(e.name)} ${effLabel(e)}</span>`).join("")}</div>`:""}<span class="small muted">${CLASSES[c.classe].n} ${c.level} &middot; Évasion ${d.ev} &middot; Seuils ${d.major}/${d.severe} &middot; Armure ${c.armorUsed}/${d.armor}</span>${bars(c)}</div>`}).join(""):`<p class="small muted">Aucun personnage à la table.</p>`}</section></div></div>`}
+ <div class="col"><section class="box"><h2>Personnages joueurs</h2>${L.chars.length?L.chars.map(c=>{const d=derive(c);if(!d)return"";return `<div class="item"><div class="itemhead"><b style="font:700 1.15rem var(--f-display)">${esc(c.name||"Sans nom")}</b><div class="flexgap">${SRV.on&&c.owner&&c.owner!==L.me.id?`<span class="small muted">Joueur : ${esc(c.owner.slice(2))}</span><button class="btn sm" data-act="resetpin" data-k="${esc(c.owner.slice(2))}">Code provisoire</button>`:""}<button class="btn sm" data-open="${c.id}">Fiche</button></div></div>${(c.effects||[]).filter(e=>e.on).length?`<div class="flexgap">${c.effects.filter(e=>e.on).map(e=>`<span class="chip" style="color:${+e.val<0||+e.adv<0?"var(--hp)":"var(--ok)"}">${esc(e.name)} ${effLabel(e)}</span>`).join("")}</div>`:""}<span class="small muted">${CLASSES[c.classe].n} ${c.level} &middot; Évasion ${d.ev} &middot; Seuils ${d.major}/${d.severe} &middot; Armure ${c.armorUsed}/${d.armor}</span>${bars(c)}</div>`}).join(""):`<p class="small muted">Aucun personnage à la table.</p>`}</section></div></div>`}
 function gEnc(){const t=L.table,base=3*(+t.pcs||4)+2+(+t.adj||0);const spent=(t.adv||[]).reduce((s,a)=>s+(ADVTYPES[a.type]?.[1]||0),0);
  return `<div class="grid"><div class="col"><section class="box"><h2>Budget de rencontre</h2><p class="small muted">Points de bataille = 3 x nombre de PJ + 2, puis ajustements.</p>
  <div class="row r3"><label class="f">Nombre de PJ<input type="number" data-tp="pcs" data-num value="${t.pcs||4}" data-r="all"></label><label class="f">Ajustement<select data-tp="adj" data-num data-r="all">${[[0,"Aucun"],[-1,"−1 combat plus facile ou court"],[-2,"−2 deux Solos ou plus"],[1,"+1 adversaire de tier inférieur"],[2,"+2 combat plus dur, dégâts +1d4"]].map(([v,n])=>`<option value="${v}" ${+t.adj===v?"selected":""}>${n}</option>`).join("")}</select></label></div>
@@ -977,12 +1025,12 @@ const d12=()=>1+Math.floor(Math.random()*12),dn=n=>1+Math.floor(Math.random()*n)
 function rollExpr(expr,n){const m=String(expr).match(/d(\d+)(?:\+(\d+))?/);if(!m)return null;const die=+m[1],b=+(m[2]||0);const rs=Array.from({length:n},()=>dn(die));return{die,b,rs,tot:rs.reduce((a,x)=>a+x,0)+b}}
 let delArm=false;
 document.addEventListener("click",e=>{
- const b=e.target.closest("button,[data-act]");if(!b)return;
+ const b=e.target.closest("button,[data-act]");if(!b)return;if(b.tagName==="A")e.preventDefault();
  if(b.dataset.role){if(b.dataset.role==="mj"&&!L.me.canEdit){toast(SRV.on?"Connectez-vous avec le code MJ pour ouvrir l’espace MJ.":"L’espace MJ est réservé au propriétaire de la page.");return}L.role=b.dataset.role;if(L.view==="sheet"&&L.role==="mj")L.view="home";render();return}
  if(b.dataset.open){L.cur=b.dataset.open;L.view="sheet";L.tab="fiche";render();scrollTo({top:0});return}
  if(b.dataset.tab){L.tab=b.dataset.tab;render();return}
  if(b.dataset.dice){L.dice=b.dataset.dice;saveLocal();render();return}
- if(b.dataset.gtab){L.gtab=b.dataset.gtab;render();return}
+ if(b.dataset.gtab){L.gtab=b.dataset.gtab;if(L.gtab==="admin")admLoad();render();return}
  if(b.dataset.step){L.wiz.step=+b.dataset.step;render();scrollTo({top:0});return}
  const c=T();
  if(b.dataset.set&&c){c[b.dataset.set]=b.dataset.v;if(b.dataset.set==="classe"){c.sub="";c.cards=[];if(c.prim&&c.prim.dt==="mag")c.prim=null}
@@ -1000,10 +1048,21 @@ document.addEventListener("click",e=>{
  if(b.dataset.advs){const[i,k]=b.dataset.advs.split("|"),a=L.table.adv[+i],j=+b.dataset.i;a[k]=a[k]===j+1?j:j+1;saveTable();render();return}
  const a=b.dataset.act,i=+b.dataset.i;if(!a)return;
  const D=c&&derive(c);
+ if(a.startsWith("adm")&&admClick(a,b))return;
  switch(a){
   case "srvlogin":srvTryLogin();return;
-  case "resetpin":{if(!b.dataset.armed){b.dataset.armed="1";b.textContent="Confirmer";setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent="Réinit. code"}},3000);return}
-   api("POST","api/resetpin?name="+encodeURIComponent(b.dataset.k)).then(()=>toast("Code de "+b.dataset.k+" réinitialisé. Il choisira un nouveau code à sa prochaine connexion."),e=>toast(e.message||"Échec."));return}
+  case "lgtab":{["lg-table","lg-name","lg-mj"].forEach(id=>{const v=lgv(id);if(v!==null)SRV[id.slice(3)==="name"?"name":id.slice(3)]=v});SRV.screen=b.dataset.k;lgShow();return}
+  case "srvcreate":srvTryCreate();return;
+  case "srvrecover":srvTryRecover();return;
+  case "srvchange":srvTryChange();return;
+  case "reccopy":{try{navigator.clipboard.writeText(SRV.recCode).then(()=>toast("Code copié."),()=>toast(SRV.recCode))}catch(e){toast(SRV.recCode)}return}
+  case "recdl":recFile();return;
+  case "recdone":SRV.recCode="";if(SRV.back){SRV.back=false;SRV.login=false;SRV.screen="login";render();return}afterAuth();return;
+  case "acct":SRV.acct=!SRV.acct;render();return;
+  case "acpin":accPin();return;
+  case "newrec":accRec();return;
+  case "resetpin":{if(!b.dataset.armed){b.dataset.armed="1";b.textContent="Confirmer";setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent="Code provisoire"}},3000);return}
+   api("POST","api/admin/reset?name="+encodeURIComponent(b.dataset.k),{}).then(j=>{ADM.temp={name:b.dataset.k,code:j.temp};L.gtab="admin";admLoad();render()},e=>toast(e.message||"Échec."));return}
   case "copyurl":{try{navigator.clipboard.writeText(SRV.publicUrl).then(()=>toast("Adresse copiée."),()=>toast(SRV.publicUrl))}catch(e){toast(SRV.publicUrl)}return}
   case "srvlogout":srvLogout();return;
   case "home":L.view="home";if(L.role==="mj"&&!b.closest("nav"))L.role=L.role;break;
@@ -1119,7 +1178,66 @@ document.addEventListener("click",e=>{
 loadLocal();
 if(L.wiz&&!L.wiz.d)L.wiz=null;
 render();
-(async()=>{srvLoad();if(await srvDetect()){try{await srvLogin();connect()}catch(e){SRV.login=true;render()}}else connect()})();
+/* =================== PAGE ADMIN (serveur) =================== */
+const ADM={d:null,busy:false,err:"",temp:null,t:0};
+const ago=t=>{if(!t)return"jamais";const s=(Date.now()-t)/1e3;if(s<90)return"à l’instant";if(s<3600)return"il y a "+Math.round(s/60)+" min";if(s<86400)return"il y a "+Math.round(s/3600)+" h";return new Date(t).toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit",year:"2-digit"})};
+const dt=t=>t?new Date(t).toLocaleString("fr-FR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"";
+function admLoad(silent){if(ADM.busy)return;ADM.busy=true;api("GET","api/admin/overview").then(d=>{ADM.d=d;ADM.err="";ADM.t=Date.now()},e=>{ADM.err=e.message||"Chargement impossible."}).finally(()=>{ADM.busy=false;if(L.role==="mj"&&L.gtab==="admin"&&!document.activeElement?.closest?.("#adm input"))render()})}
+setInterval(()=>{if(SRV.on&&L.role==="mj"&&L.gtab==="admin"&&document.visibilityState==="visible")admLoad(true)},20e3);
+async function admDo(op,q,body,msg){try{const j=await api("POST","api/admin/"+op+(q?"?"+new URLSearchParams(q):""),body||{});if(msg)toast(msg);return j}catch(e){toast(e.message||"Échec.");return null}finally{admLoad()}}
+const clsName=k=>(CLASSES[k]&&CLASSES[k].n)||k||"?";
+function admChars(list,from,players){if(!list.length)return`<span class="small muted">Aucune fiche</span>`;
+ return list.map(c=>`<div class="flexgap" style="margin:4px 0;align-items:center"><b>${esc(c.name)}</b><span class="small muted">${esc(clsName(c.classe))} niv. ${c.level}</span>
+  ${L.chars.some(x=>x.id===c.id)?`<button class="btn sm" data-open="${esc(c.id)}">Fiche</button>`:""}
+  <select data-admmove="${esc(from)}|${esc(c.id)}" style="width:auto;padding:4px 8px"><option value="">Transférer à…</option>${players.filter(p=>"p_"+p.slug!==from).map(p=>`<option value="${esc(p.slug)}">${esc(p.name)}</option>`).join("")}</select>
+  <button class="btn sm danger" data-act="admdelchar" data-k="${esc(from)}|${esc(c.id)}">Supprimer</button></div>`).join("")}
+function gAdmin(){if(!SRV.on)return`<section class="box"><p>La page admin est disponible sur la version serveur.</p></section>`;
+ if(!ADM.d){if(!ADM.busy)admLoad();return`<section class="box"><h2>Administration</h2><p class="small muted">${ADM.err?esc(ADM.err):"Chargement…"}</p></section>`}
+ const d=ADM.d,A=d.accounts,on=A.filter(a=>a.online).length,s=d.settings;
+ const chip=(t,c)=>`<span class="chip" style="color:${c}">${t}</span>`;
+ return `<div id="adm" class="col">
+ <section class="box"><div class="flexgap" style="justify-content:space-between"><h2 style="margin:0">Administration</h2><span class="flexgap"><span class="small muted">Mis à jour ${ago(ADM.t)}</span><button class="btn sm" data-act="admrefresh">Actualiser</button></span></div>
+  <div class="stats" style="margin-top:12px"><div class="stat"><small>Comptes</small><strong>${A.length}</strong></div><div class="stat"><small>En ligne</small><strong>${on}</strong></div><div class="stat"><small>Fiches</small><strong>${A.reduce((n,a)=>n+a.chars.length,0)}</strong></div><div class="stat"><small>Sauvegardes</small><strong>${d.backups.length}</strong></div></div>
+  <div class="flexgap" style="margin-top:12px;justify-content:space-between"><span>Inscriptions : <b>${s.open?"ouvertes":"fermées"}</b> <span class="small muted">${s.open?"tout joueur ayant le code de table peut créer un compte":"seul le MJ peut créer un compte"}</span></span><button class="btn sm ${s.open?"":"pri"}" data-act="admopen">${s.open?"Fermer les inscriptions":"Ouvrir les inscriptions"}</button></div>
+  ${ADM.temp?`<div class="note fear" style="margin-top:12px"><div class="flexgap" style="justify-content:space-between"><span>Code provisoire de <b>${esc(ADM.temp.name)}</b> : <b style="font:700 1.3rem var(--f-display);letter-spacing:.1em">${esc(ADM.temp.code)}</b><br><span class="small muted">Donnez-le au joueur. Il devra choisir un nouveau mot de passe à sa connexion.</span></span><button class="btn sm" data-act="admtempok">Fermer</button></div></div>`:""}
+ </section>
+ <section class="box"><h2>Joueurs</h2><div class="scroll"><table class="t"><thead><tr><th>Joueur</th><th>Statut</th><th>Inscrit</th><th>Activité</th><th>Personnages</th><th>Actions</th></tr></thead><tbody>
+ ${A.map(a=>`<tr${a.locked?' class="dis"':""}><td><b>${esc(a.name)}</b>${a.slug===d.me?' <span class="small muted">(vous)</span>':""}</td>
+  <td><div class="flexgap">${a.online?chip("En ligne","var(--ok)"):""}${a.locked?chip("Bloqué","var(--hp)"):""}${a.tmp?chip("Code provisoire","var(--fear)"):""}${!a.recovery?chip("Sans code récup.","var(--muted,#999)"):""}</div></td>
+  <td class="small">${dt(a.created)}</td><td class="small">${ago(a.last)}</td><td>${admChars(a.chars,"p_"+a.slug,A)}</td>
+  <td><div class="flexgap"><button class="btn sm" data-act="admreset" data-k="${esc(a.slug)}">Code provisoire</button>${a.slug!==d.me?`<button class="btn sm" data-act="admlock" data-k="${esc(a.slug)}">${a.locked?"Débloquer":"Bloquer"}</button><button class="btn sm danger" data-act="admdel" data-k="${esc(a.slug)}" data-n="${esc(a.name)}">Supprimer</button>`:""}</div></td></tr>`).join("")||`<tr><td colspan="6" class="muted">Aucun compte.</td></tr>`}
+ </tbody></table></div><p class="small muted" style="margin-top:8px">« Supprimer » efface le compte et toutes ses fiches. « Bloquer » coupe l’accès sans rien effacer.</p></section>
+ ${d.orphans.length?`<section class="box"><h2>Fiches sans compte</h2><p class="small muted">Fiches créées avant les comptes joueurs ou appartenant à un compte supprimé. Transférez-les à un joueur ou supprimez-les.</p>${d.orphans.map(o=>`<div class="item"><div class="itemhead"><span class="small muted">Dossier ${esc(o.pid)}</span><button class="btn sm danger" data-act="admpurge" data-k="${esc(o.pid)}">Supprimer le dossier</button></div>${admChars(o.chars,o.pid,A)}</div>`).join("")}</section>`:""}
+ <section class="box"><h2>Réglages de la table</h2>
+  <div class="row"><label class="f">Code de la table<input id="adm-table" value="${esc(s.tableCode)}" autocomplete="off"></label><div style="align-self:end"><button class="btn sm" data-act="admtable">Enregistrer</button></div></div>
+  <p class="small muted" style="margin-top:6px">Changer le code de table oblige tous les joueurs à le retaper à leur prochaine visite.</p>
+  <div class="row" style="margin-top:12px"><label class="f">Nouveau code MJ<input id="adm-mj" type="password" autocomplete="new-password" placeholder="8 caractères minimum"></label><label class="f">Confirmer<input id="adm-mj2" type="password" autocomplete="new-password"></label></div>
+  <button class="btn sm" data-act="admmj" style="margin-top:8px">Changer le code MJ</button></section>
+ <section class="box"><div class="flexgap" style="justify-content:space-between"><h2 style="margin:0">Journal</h2><span class="flexgap"><button class="btn sm" data-act="admexport">Exporter toutes les fiches</button><button class="btn sm" data-act="admclearlog">Vider</button></span></div>
+  <div class="scroll" style="max-height:340px;margin-top:10px"><table class="t"><thead><tr><th>Date</th><th>Évènement</th><th>Joueur</th><th>Adresse IP</th></tr></thead><tbody>
+  ${d.log.map(l=>`<tr><td class="small">${dt(l.t)}</td><td${/incorrect|échou|refus|Mauvais/i.test(l.ev)?' style="color:var(--hp)"':""}>${esc(l.ev)}</td><td>${esc(l.who)}</td><td class="small muted">${esc(l.ip)}</td></tr>`).join("")||`<tr><td colspan="4" class="muted">Rien pour l’instant.</td></tr>`}
+  </tbody></table></div><p class="small muted" style="margin-top:8px">Sauvegarde automatique chaque jour dans data\\sauvegardes (30 jours). Dernière : ${esc(d.backups[0]||"aucune")}.</p></section></div>`}
+function admExport(){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify({exportedAt:new Date().toISOString(),chars:L.chars},null,1)],{type:"application/json"}));a.download="daggerheart-fiches-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
+function admClick(a,b){const k=b.dataset.k;
+ const arm=(lbl)=>{if(b.dataset.armed)return true;b.dataset.armed="1";const o=b.textContent;b.textContent=lbl||"Confirmer ?";setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent=o}},3500);return false};
+ switch(a){
+  case "admrefresh":admLoad();return true;
+  case "admtempok":ADM.temp=null;render();return true;
+  case "admopen":admDo("settings",null,{open:!ADM.d.settings.open});return true;
+  case "admreset":if(!arm())return true;admDo("reset",{name:k}).then(j=>{if(j){ADM.temp={name:(ADM.d.accounts.find(x=>x.slug===k)||{}).name||k,code:j.temp};render()}});return true;
+  case "admlock":admDo("lock",{name:k},null,null);return true;
+  case "admdel":{const n=prompt("Supprimer le compte de "+b.dataset.n+" et toutes ses fiches ?\nTapez son nom pour confirmer :");if(n===null)return true;admDo("delete",{name:k},{confirm:n},"Compte supprimé.");return true}
+  case "admdelchar":{if(!arm())return true;const[f,id]=k.split("|");admDo("delchar",{from:f,id},null,"Fiche supprimée.");return true}
+  case "admpurge":if(!arm())return true;admDo("purge",{pid:k},null,"Dossier supprimé.");return true;
+  case "admtable":{const t=lgv("adm-table");if(!arm("Confirmer le changement"))return true;admDo("settings",null,{tableCode:t},"Code de table changé.").then(j=>{if(j){SRV.table=t;srvSave()}});return true}
+  case "admmj":{const m=lgraw("adm-mj")||"",m2=lgraw("adm-mj2");if(m.length<8){toast("Code MJ : 8 caractères minimum.");return true}if(m!==m2){toast("Les deux codes ne correspondent pas.");return true}
+   admDo("settings",null,{mjCode:m,mjCode2:m2},"Code MJ changé.").then(j=>{if(j){SRV.mj=m;srvSave();setTimeout(()=>location.reload(),900)}});return true}
+  case "admclearlog":if(!arm())return true;admDo("clearlog");return true;
+  case "admexport":admExport();return true}
+ return false}
+main.addEventListener("change",e=>{const t=e.target;if(t.dataset.admmove===undefined||!t.value)return;const[f,id]=t.dataset.admmove.split("|");const to=t.value;
+ admDo("movechar",{from:f,id,to},null,"Fiche transférée.")});
+(async()=>{srvLoad();if(await srvDetect()){if(!SRV.pin){SRV.login=true;SRV.screen=SRV.name?"login":"create";render();return}try{await srvLogin("login");afterAuth()}catch(e){SRV.login=true;SRV.screen="login";if(e.code&&e.code!==401)SRV.err=e.message||"";render()}}else connect()})();
 </script>
 <script>if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});</script>
 </body></html>
