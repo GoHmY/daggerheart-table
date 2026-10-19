@@ -457,7 +457,7 @@ function makeServerDb(){const ls=new Set();
  return{doc,collection:col}}
 async function srvDetect(){if(!/^https?:$/.test(location.protocol))return false;try{const r=await fetch("api/ping",{cache:"no-store"});if(!r.ok)return false;const j=await r.json();if(!j||!j.ok)return false;SRV.on=true;SRV.needTable=!!j.needTable;SRV.publicUrl=j.publicUrl||"";SRV.open=j.open!==false;SRV.mail=!!j.mail;SRV.v=j.v||1;return true}catch(e){return false}}
 async function srvLogin(mode){const j=await fetch("api/login",{method:"POST",headers:{"X-Table":SRV.table,"X-MJ":SRV.mj,"X-Player":encodeURIComponent(SRV.name),"X-Pin":SRV.pin,"X-Mode":mode||"login","X-Email":mode==="create"?encodeURIComponent(SRV.email||""):""},cache:"no-store"}).then(async r=>{const j=await r.json().catch(()=>null);if(!r.ok)throw{code:r.status,message:(j&&j.error)||"Erreur "+r.status};return j});
- SRV.isMJ=!!j.mj;SRV.pid=j.pid;SRV.name=j.name||SRV.name;SRV.created=!!j.created;SRV.mustChange=!!j.mustChange;SRV.hasRecovery=!!j.hasRecovery||!!j.recovery;SRV.email=j.email||"";srvSave();return j}
+ SRV.isMJ=!!j.mj;SRV.pid=j.pid;SRV.name=j.name||SRV.name;SRV.created=!!j.created;SRV.mustChange=!!j.mustChange;SRV.hasRecovery=!!j.hasRecovery||!!j.recovery;SRV.email=j.email||"";SRV.tableName=j.table||"";srvSave();return j}
 const lgv=id=>{const e=document.getElementById(id);return e?e.value.trim():null};
 const lgraw=id=>{const e=document.getElementById(id);return e?e.value:null};
 function lgShow(err){SRV.err=err||"";document.getElementById("main").innerHTML=renderLogin()}
@@ -524,7 +524,7 @@ function recFile(){const t="Table Daggerheart\nJoueur : "+SRV.name+"\nCode de r�
 function srvLogout(){SRV.mj="";SRV.pin="";srvSave();location.reload()}
 /* Mon compte */
 function renderAccount(){if(!SRV.on||SRV.login)return"";const open=SRV.acct;
- return `<div class="note"><div class="flexgap" style="justify-content:space-between"><span>Connecté en tant que <b>${esc(SRV.name)}</b>${SRV.isMJ?" (MJ)":""}.</span><span class="flexgap"><button class="btn sm" data-act="acct">Mon compte</button><button class="btn sm" data-act="srvlogout">Se déconnecter</button></span></div>
+ return `<div class="note"><div class="flexgap" style="justify-content:space-between"><span>Connecté en tant que <b>${esc(SRV.name)}</b>${SRV.isMJ?" (MJ)":""}${SRV.tableName?` sur la table <b>${esc(SRV.tableName)}</b>`:""}.</span><span class="flexgap"><button class="btn sm" data-act="acct">Mon compte</button><button class="btn sm" data-act="srvlogout">Se déconnecter</button></span></div>
   ${!SRV.hasRecovery?`<p class="warn" style="margin-top:8px">Votre compte n’a pas encore de code de récupération. <button class="btn sm" data-act="newrec">En créer un</button></p>`:""}
   ${open?`<div style="margin-top:10px"><div class="row"><label class="f">Nouveau mot de passe<input id="ac-pin" type="password" autocomplete="new-password"></label><label class="f">Confirmer<input id="ac-pin2" type="password" autocomplete="new-password"></label></div>
   <div class="flexgap" style="margin-top:8px"><button class="btn sm pri" data-act="acpin">Changer mon mot de passe</button><button class="btn sm" data-act="newrec">Nouveau code de récupération</button></div>

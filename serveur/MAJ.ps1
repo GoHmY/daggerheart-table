@@ -9,6 +9,7 @@ Stop-ScheduledTask -TaskName 'Table Daggerheart' -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 2
 Invoke-WebRequest "$raw/server.js"  -OutFile (Join-Path $dir 'server.js') -UseBasicParsing
 Invoke-WebRequest "$raw/index.html" -OutFile (Join-Path $dir 'public\index.html') -UseBasicParsing
+Invoke-WebRequest "$raw/admin.html" -OutFile (Join-Path $dir 'public\admin.html') -UseBasicParsing
 Start-ScheduledTask -TaskName 'Table Daggerheart'
 Start-Sleep -Seconds 3
 try { Write-Host ('Serveur : ' + (Invoke-WebRequest 'http://localhost:8090/api/ping' -UseBasicParsing).Content) -ForegroundColor Green }
