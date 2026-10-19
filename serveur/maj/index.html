@@ -437,13 +437,13 @@ function softRender(){const a=document.activeElement;if(a&&a.closest&&a.closest(
 document.addEventListener("focusout",()=>setTimeout(()=>{if(needRender){needRender=false;softRender()}},50));
 
 /* =================== MODE SERVEUR (auto-hébergé) =================== */
-const SRV={on:false,table:"",mj:"",pid:"",isMJ:false,needTable:false,login:false};
+const SRV={on:false,table:"",mj:"",name:"",pin:"",pid:"",isMJ:false,needTable:false,login:false};
 const SKEY="dh-srv";
-function srvLoad(){try{Object.assign(SRV,JSON.parse(localStorage.getItem(SKEY)||"{}"))}catch(e){}if(!/^p_[a-z0-9]{8,32}$/.test(SRV.pid||""))SRV.pid="p_"+(uid()+uid()).slice(0,16)}
-function srvSave(){try{localStorage.setItem(SKEY,JSON.stringify({table:SRV.table,mj:SRV.mj,pid:SRV.pid}))}catch(e){}}
-function api(method,url,data){return fetch(url,{method,headers:{"Content-Type":"application/json","X-Table":SRV.table,"X-MJ":SRV.mj,"X-Player":SRV.pid},body:data===undefined?undefined:JSON.stringify(data),cache:"no-store"}).then(async r=>{const j=await r.json().catch(()=>null);if(!r.ok)throw{code:r.status,message:(j&&j.error)||"Erreur "+r.status};return j})}
+function srvLoad(){try{const o=JSON.parse(localStorage.getItem(SKEY)||"{}");["table","mj","name","pin"].forEach(k=>{if(typeof o[k]==="string")SRV[k]=o[k]})}catch(e){}}
+function srvSave(){try{localStorage.setItem(SKEY,JSON.stringify({table:SRV.table,mj:SRV.mj,name:SRV.name,pin:SRV.pin}))}catch(e){}}
+function api(method,url,data){return fetch(url,{method,headers:{"Content-Type":"application/json","X-Table":SRV.table,"X-MJ":SRV.mj,"X-Player":encodeURIComponent(SRV.name),"X-Pin":SRV.pin},body:data===undefined?undefined:JSON.stringify(data),cache:"no-store"}).then(async r=>{const j=await r.json().catch(()=>null);if(!r.ok)throw{code:r.status,message:(j&&j.error)||"Erreur "+r.status};return j})}
 function makeServerDb(){const ls=new Set();
- const es=new EventSource("api/events?"+new URLSearchParams({table:SRV.table,mj:SRV.mj,player:SRV.pid}));
+ const es=new EventSource("api/events?"+new URLSearchParams({table:SRV.table,mj:SRV.mj,player:encodeURIComponent(SRV.name),pin:SRV.pin}));
  es.onmessage=e=>{ls.forEach(l=>{if(l.match(e.data))l.run()})};
  es.onopen=()=>ls.forEach(l=>l.run());
  const snap=(id,x)=>({id,exists:x!=null,data:()=>x==null?undefined:x,metadata:{fromCache:false,hasPendingWrites:false}});
@@ -456,18 +456,22 @@ function makeServerDb(){const ls=new Set();
   return{path:p,doc:id=>doc(p+"/"+id),get,onSnapshot:(n,e)=>listen(q=>q.slice(0,q.lastIndexOf("/"))===p,get,n,e)}};
  return{doc,collection:col}}
 async function srvDetect(){if(!/^https?:$/.test(location.protocol))return false;try{const r=await fetch("api/ping",{cache:"no-store"});if(!r.ok)return false;const j=await r.json();if(!j||!j.ok)return false;SRV.on=true;SRV.needTable=!!j.needTable;SRV.publicUrl=j.publicUrl||"";return true}catch(e){return false}}
-async function srvLogin(){const j=await api("POST","api/login");SRV.isMJ=!!j.mj;srvSave();return j}
+async function srvLogin(){const j=await api("POST","api/login");SRV.isMJ=!!j.mj;SRV.pid=j.pid;SRV.created=!!j.created;srvSave();return j}
 function renderLogin(err){return `<div class="col" style="max-width:520px;margin:20px auto"><section class="box"><h2>Rejoindre la table</h2>
- <p class="small muted">Demandez le code de la table à votre MJ. Le code MJ est réservé au meneur de jeu.</p>
- ${SRV.needTable?`<label class="f">Code de la table<input id="lg-table" value="${esc(SRV.table)}" autocomplete="off"></label>`:""}
+ <p class="small muted">Première connexion : choisissez votre nom de joueur et un code secret. Ils vous serviront à retrouver vos fiches sur n’importe quel appareil.</p>
+ ${SRV.needTable?`<label class="f">Code de la table<input id="lg-table" value="${esc(SRV.table)}" autocomplete="off" placeholder="Donné par votre MJ"></label>`:""}
+ <div class="row" style="margin-top:10px"><label class="f">Nom de joueur<input id="lg-name" value="${esc(SRV.name)}" autocomplete="username" maxlength="20" placeholder="Ex. : Kevin"></label>
+ <label class="f">Code secret<input id="lg-pin" type="password" value="" autocomplete="current-password" placeholder="4 caractères minimum"></label></div>
  <details class="fold"><summary>Je suis le MJ</summary><label class="f" style="margin-top:8px">Code MJ<input id="lg-mj" type="password" value="${esc(SRV.mj)}" autocomplete="off"></label></details>
- <details class="fold"><summary>Retrouver mes fiches d’un autre appareil</summary><label class="f" style="margin-top:8px">Code joueur<input id="lg-pid" value="${esc(SRV.pid)}" autocomplete="off"></label><p class="small muted" style="margin-top:6px">Votre code joueur est affiché sur l’accueil une fois connecté.</p></details>
  ${err?`<p class="warn" style="margin-top:10px">${esc(err)}</p>`:""}
- <button class="btn pri" data-act="srvlogin" style="margin-top:14px">Entrer</button></section></div>`}
+ <button class="btn pri" data-act="srvlogin" style="margin-top:14px">Entrer</button>
+ <p class="small muted" style="margin-top:10px">Code secret oublié ? Demandez au MJ de le réinitialiser.</p></section></div>`}
 async function srvTryLogin(){const g=id=>{const e=document.getElementById(id);return e?e.value.trim():null};
- const t=g("lg-table"),m=g("lg-mj"),p=g("lg-pid");if(t!==null)SRV.table=t;if(m!==null)SRV.mj=m;if(p&&/^p_[a-z0-9]{8,32}$/.test(p))SRV.pid=p;
- try{await srvLogin();SRV.login=false;connect()}catch(e){if(e.code===401&&SRV.mj&&/MJ/.test(e.message)){SRV.mj=""}document.getElementById("main").innerHTML=renderLogin(e.message||"Connexion impossible.")}}
-function srvLogout(){SRV.mj="";SRV.table=SRV.needTable?"":SRV.table;srvSave();location.reload()}
+ const t=g("lg-table"),m=g("lg-mj"),n=g("lg-name"),p=g("lg-pin");if(t!==null)SRV.table=t;if(m!==null)SRV.mj=m;if(n!==null)SRV.name=n;if(p!==null)SRV.pin=p;
+ if(SRV.name.length<2){document.getElementById("main").innerHTML=renderLogin("Choisissez un nom de joueur (2 caractères minimum).");return}
+ if(SRV.pin.length<4){document.getElementById("main").innerHTML=renderLogin("Le code secret doit faire au moins 4 caractères.");return}
+ try{await srvLogin();SRV.login=false;if(SRV.created)toast("Bienvenue "+SRV.name+" ! Retenez bien votre code secret.");connect()}catch(e){if(e.code===401&&SRV.mj&&/MJ/.test(e.message)){SRV.mj=""}document.getElementById("main").innerHTML=renderLogin(e.message||"Connexion impossible.")}}
+function srvLogout(){SRV.mj="";SRV.pin="";srvSave();location.reload()}
 
 async function connect(){
  try{let d,u;if(SRV.on){d=makeServerDb();u={id:async()=>SRV.pid,canEdit:async()=>SRV.isMJ}}else{if(!window.claude||!window.claude.use)return;[d,u]=await Promise.all([claude.use("db"),claude.use("user")])}if(!d||!u)return;db=d;usr=u;
@@ -676,7 +680,7 @@ function renderHome(){
  const card=c=>{const cl=CLASSES[c.classe];return `<button class="pc" data-open="${c.id}"><div class="pimg">${portrait(c)}<div class="pname"><span>${cl?cl.n:""}${c.sub&&cl?" &middot; "+cl.subs[c.sub].n:""} &middot; Niv. ${c.level}</span><b>${esc(c.name||"Sans nom")}</b></div></div><div class="pbody"><span class="small muted">${c.anc1?ANC[c.anc1].n:""}${c.comm?" &middot; "+COMM[c.comm].n:""}</span>${bars(c)}${c.example?`<span class="chip">Exemple</span>`:""}</div></button>`};
  return `<div class="col">
   ${L.mode==="local"?`<div class="note">Mode local : vos personnages restent dans ce navigateur. Ouvrez la page depuis claude.ai, connecté, pour partager la table avec le groupe et le MJ.</div>`:""}
-  ${SRV.on&&!SRV.login?`<div class="note"><div class="flexgap" style="justify-content:space-between"><span>Votre code joueur : <b>${esc(SRV.pid)}</b>. Notez-le pour retrouver vos fiches sur un autre appareil.${SRV.isMJ?" Connecté en MJ.":""}</span><button class="btn sm" data-act="srvlogout">Changer de table</button></div></div>`:""}
+  ${SRV.on&&!SRV.login?`<div class="note"><div class="flexgap" style="justify-content:space-between"><span>Connecté en tant que <b>${esc(SRV.name)}</b>${SRV.isMJ?" (MJ)":""}. Votre nom et votre code secret fonctionnent sur tous vos appareils.</span><button class="btn sm" data-act="srvlogout">Se déconnecter</button></div></div>`:""}
   ${SRV.on&&SRV.isMJ&&SRV.publicUrl?`<div class="note fear"><div class="flexgap" style="justify-content:space-between"><span>Adresse à partager avec les joueurs : <b>${esc(SRV.publicUrl)}</b><br><span class="small muted">Elle change à chaque redémarrage du serveur.</span></span><button class="btn sm" data-act="copyurl">Copier</button></div></div>`:""}
   ${publicStrip()}
   <section class="box"><div class="flexgap" style="justify-content:space-between;margin-bottom:12px"><h2 style="margin:0">Mes personnages</h2><div class="flexgap">${L.wiz?`<button class="btn" data-act="resume">Reprendre la création</button>`:""}<button class="btn" data-act="dlall">Télécharger mes fiches</button><button class="btn pri" data-act="newwiz">Créer un personnage</button></div></div>
@@ -911,7 +915,7 @@ function gTable(){const t=L.table;const pf=L.mode==="db"?pendingFear():0;
  <section class="box"><h2>Comptes à rebours</h2>${(t.cds||[]).map((x,i)=>`<div class="cd"><div style="min-width:0"><input data-tp="cds.${i}.name" value="${esc(x.name)}" aria-label="Nom"><div class="flexgap" style="margin-top:6px"><div class="slots">${Array.from({length:x.max},(_,j)=>`<button class="slot ${j<x.v?"on":""}" style="--c:var(--hope)" data-cd="${i}" data-i="${j}" aria-label="Case ${j+1}"></button>`).join("")}</div></div></div>
   <div class="flexgap" style="flex-direction:column"><label class="small flexgap"><input type="checkbox" data-tp="cds.${i}.pub" ${x.pub?"checked":""} style="width:auto">Public</label><button class="btn sm danger" data-act="delcd" data-i="${i}">✕</button></div></div>`).join("")||`<p class="small muted">Aucun compte à rebours.</p>`}
  <div class="flexgap"><input id="cdname" placeholder="Ex. : Le rituel s’achève" style="flex:1 1 180px"><input id="cdmax" type="number" value="6" min="1" max="12" style="width:70px" aria-label="Taille"><button class="btn sm" data-act="addcd">Ajouter</button></div></section></div>
- <div class="col"><section class="box"><h2>Personnages joueurs</h2>${L.chars.length?L.chars.map(c=>{const d=derive(c);if(!d)return"";return `<div class="item"><div class="itemhead"><b style="font:700 1.15rem var(--f-display)">${esc(c.name||"Sans nom")}</b><button class="btn sm" data-open="${c.id}">Fiche</button></div>${(c.effects||[]).filter(e=>e.on).length?`<div class="flexgap">${c.effects.filter(e=>e.on).map(e=>`<span class="chip" style="color:${+e.val<0||+e.adv<0?"var(--hp)":"var(--ok)"}">${esc(e.name)} ${effLabel(e)}</span>`).join("")}</div>`:""}<span class="small muted">${CLASSES[c.classe].n} ${c.level} &middot; Évasion ${d.ev} &middot; Seuils ${d.major}/${d.severe} &middot; Armure ${c.armorUsed}/${d.armor}</span>${bars(c)}</div>`}).join(""):`<p class="small muted">Aucun personnage à la table.</p>`}</section></div></div>`}
+ <div class="col"><section class="box"><h2>Personnages joueurs</h2>${L.chars.length?L.chars.map(c=>{const d=derive(c);if(!d)return"";return `<div class="item"><div class="itemhead"><b style="font:700 1.15rem var(--f-display)">${esc(c.name||"Sans nom")}</b><div class="flexgap">${SRV.on&&c.owner&&c.owner!==L.me.id?`<span class="small muted">Joueur : ${esc(c.owner.slice(2))}</span><button class="btn sm" data-act="resetpin" data-k="${esc(c.owner.slice(2))}">Réinit. code</button>`:""}<button class="btn sm" data-open="${c.id}">Fiche</button></div></div>${(c.effects||[]).filter(e=>e.on).length?`<div class="flexgap">${c.effects.filter(e=>e.on).map(e=>`<span class="chip" style="color:${+e.val<0||+e.adv<0?"var(--hp)":"var(--ok)"}">${esc(e.name)} ${effLabel(e)}</span>`).join("")}</div>`:""}<span class="small muted">${CLASSES[c.classe].n} ${c.level} &middot; Évasion ${d.ev} &middot; Seuils ${d.major}/${d.severe} &middot; Armure ${c.armorUsed}/${d.armor}</span>${bars(c)}</div>`}).join(""):`<p class="small muted">Aucun personnage à la table.</p>`}</section></div></div>`}
 function gEnc(){const t=L.table,base=3*(+t.pcs||4)+2+(+t.adj||0);const spent=(t.adv||[]).reduce((s,a)=>s+(ADVTYPES[a.type]?.[1]||0),0);
  return `<div class="grid"><div class="col"><section class="box"><h2>Budget de rencontre</h2><p class="small muted">Points de bataille = 3 x nombre de PJ + 2, puis ajustements.</p>
  <div class="row r3"><label class="f">Nombre de PJ<input type="number" data-tp="pcs" data-num value="${t.pcs||4}" data-r="all"></label><label class="f">Ajustement<select data-tp="adj" data-num data-r="all">${[[0,"Aucun"],[-1,"−1 combat plus facile ou court"],[-2,"−2 deux Solos ou plus"],[1,"+1 adversaire de tier inférieur"],[2,"+2 combat plus dur, dégâts +1d4"]].map(([v,n])=>`<option value="${v}" ${+t.adj===v?"selected":""}>${n}</option>`).join("")}</select></label></div>
@@ -943,7 +947,7 @@ function gNotes(){return `<section class="box"><h2>Notes privées du MJ</h2><p c
 /* =================== RENDU GLOBAL =================== */
 function render(){if(SRV.on&&SRV.login){document.getElementById("main").innerHTML=renderLogin();return}
  document.getElementById("rj").className=L.role==="joueur"?"on":"";document.getElementById("rm").className=L.role==="mj"?"on":"";
- document.getElementById("mode").textContent=L.mode==="db"?"Table partagée":"Mode local";
+ document.getElementById("mode").textContent=L.mode==="db"?"Table partagée":(SRV.on?"Serveur":"Mode local");
  let h;if(L.role==="mj"&&L.view!=="sheet")h=renderGM();else if(L.view==="wizard"&&L.wiz)h=renderWizard();else if(L.view==="sheet")h=renderSheet();else h=renderHome();
  document.getElementById("main").innerHTML=h;saveLocal();
 }
@@ -998,6 +1002,8 @@ document.addEventListener("click",e=>{
  const D=c&&derive(c);
  switch(a){
   case "srvlogin":srvTryLogin();return;
+  case "resetpin":{if(!b.dataset.armed){b.dataset.armed="1";b.textContent="Confirmer";setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent="Réinit. code"}},3000);return}
+   api("POST","api/resetpin?name="+encodeURIComponent(b.dataset.k)).then(()=>toast("Code de "+b.dataset.k+" réinitialisé. Il choisira un nouveau code à sa prochaine connexion."),e=>toast(e.message||"Échec."));return}
   case "copyurl":{try{navigator.clipboard.writeText(SRV.publicUrl).then(()=>toast("Adresse copiée."),()=>toast(SRV.publicUrl))}catch(e){toast(SRV.publicUrl)}return}
   case "srvlogout":srvLogout();return;
   case "home":L.view="home";if(L.role==="mj"&&!b.closest("nav"))L.role=L.role;break;

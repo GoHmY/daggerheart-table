@@ -42,12 +42,24 @@ function persist() {
 const SEG = /^(?!\.\.?$)[A-Za-z0-9_\-.~:@+]{1,200}$/;
 const validPath = p => typeof p === "string" && p.length <= 1000 && p.split("/").every(s => SEG.test(s));
 const same = (a, b) => { const x = Buffer.from(String(a)), y = Buffer.from(String(b)); return x.length === y.length && crypto.timingSafeEqual(x, y); };
+/* Joueurs : un nom choisi à la première connexion et un code secret (haché, jamais stocké en clair) */
+const NAME = /^[a-z0-9][a-z0-9-]{1,19}$/;
+const slug = s => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 20);
+const dec = s => { try { return decodeURIComponent(String(s || "")); } catch (e) { return ""; } };
+const hashPin = (pin, salt) => crypto.scryptSync(String(pin), salt, 32).toString("hex");
+const okCache = new Map();
+function checkPin(sl, pin) {
+  const rec = store["_auth/" + sl]; if (!rec || !pin) return false;
+  const k = sl + "\0" + crypto.createHash("sha256").update(String(pin)).digest("hex");
+  if (okCache.get(k) === rec.h) return true;
+  const ok = same(hashPin(pin, rec.s), rec.h); if (ok) okCache.set(k, rec.h); return ok;
+}
 function who(req, q) {
   const h = k => req.headers[k] || (q && q.get(k.replace("x-", ""))) || "";
-  const table = h("x-table"), mj = h("x-mj"), pid = h("x-player");
+  const table = h("x-table"), mj = h("x-mj"), sl = slug(dec(h("x-player"))), pin = h("x-pin");
   if (CFG.tableCode && !same(table, CFG.tableCode)) return null;
-  if (!/^p_[a-z0-9]{8,32}$/.test(pid)) return null;
-  return { pid, mj: !!mj && same(mj, CFG.mjCode) };
+  if (!NAME.test(sl) || !checkPin(sl, pin)) return null;
+  return { pid: "p_" + sl, mj: !!mj && same(mj, CFG.mjCode) };
 }
 function canRead(p, w) {
   const s = p.split("/");
@@ -108,11 +120,23 @@ const server = http.createServer(async (req, res) => {
       if (tooMany(ip)) return send(res, 429, { error: "Trop d’essais, réessayez dans 10 minutes." });
       const w = who(req, u.pathname === "/api/events" ? u.searchParams : null);
       if (u.pathname === "/api/login") {
-        if (!w) { fail(ip); return send(res, 401, { error: "Code de table incorrect." }); }
-        if (req.headers["x-mj"] && !w.mj) { fail(ip); return send(res, 401, { error: "Code MJ incorrect." }); }
-        return send(res, 200, { ok: true, mj: w.mj });
+        const table = req.headers["x-table"] || "", mjc = req.headers["x-mj"] || "", pin = String(req.headers["x-pin"] || ""), raw = dec(req.headers["x-player"]).trim();
+        if (CFG.tableCode && !same(table, CFG.tableCode)) { fail(ip); return send(res, 401, { error: "Code de table incorrect." }); }
+        const sl = slug(raw);
+        if (!NAME.test(sl)) return send(res, 400, { error: "Nom de joueur : 2 à 20 lettres ou chiffres." });
+        if (pin.length < 4 || pin.length > 64) return send(res, 400, { error: "Code secret : 4 caractères minimum." });
+        const key = "_auth/" + sl; let created = false;
+        if (!store[key]) { const salt = crypto.randomBytes(16).toString("hex"); store[key] = { n: raw.slice(0, 30), s: salt, h: hashPin(pin, salt), t: Date.now() }; persist(); created = true; }
+        else if (!checkPin(sl, pin)) { fail(ip); return send(res, 401, { error: "Ce nom est déjà pris, ou le code secret est incorrect." }); }
+        if (mjc && !same(mjc, CFG.mjCode)) { fail(ip); return send(res, 401, { error: "Code MJ incorrect." }); }
+        return send(res, 200, { ok: true, mj: !!mjc, pid: "p_" + sl, name: store[key].n, created });
       }
       if (!w) { fail(ip); return send(res, 401, { error: "Non autorisé." }); }
+      if (u.pathname === "/api/resetpin" && req.method === "POST") {
+        if (!w.mj) return send(res, 403, { error: "Réservé au MJ." });
+        const sl = slug(u.searchParams.get("name")); if (!store["_auth/" + sl]) return send(res, 404, { error: "Joueur inconnu." });
+        delete store["_auth/" + sl]; okCache.clear(); persist(); return send(res, 200, { ok: true });
+      }
       if (u.pathname === "/api/events") {
         res.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-store", "Connection": "keep-alive", "X-Accel-Buffering": "no" });
         res.write("retry: 3000\n\n");
