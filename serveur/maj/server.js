@@ -5,10 +5,12 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const tls = require("tls");
+const os = require("os");
 
 const ROOT = __dirname;
 const CFG = { port: 8090, tableCode: "", mjCode: "" };
-try { Object.assign(CFG, JSON.parse(fs.readFileSync(path.join(ROOT, "config.json"), "utf8"))); }
+try { Object.assign(CFG, JSON.parse(fs.readFileSync(path.join(ROOT, "config.json"), "utf8").replace(/^\uFEFF/, ""))); }
 catch (e) { console.error("config.json introuvable ou invalide :", e.message); process.exit(1); }
 if (process.env.PORT) CFG.port = +process.env.PORT;
 if (!CFG.mjCode || CFG.mjCode.length < 4 || CFG.mjCode === "change-moi") { console.error("Ouvrez config.json et choisissez votre propre mjCode (4 caractères minimum)."); process.exit(1); }
@@ -37,6 +39,42 @@ function persist() {
     }
   }, 400);
 }
+
+/* ---------- Envoi de mails (SMTP Gmail, sans dépendance) ---------- */
+const MAIL = { user: String(CFG.mailUser || "").trim(), pass: String(CFG.mailPass || "").replace(/\s+/g, ""), host: CFG.mailHost || "smtp.gmail.com", port: +CFG.mailPort || 465, name: CFG.mailName || "Table Daggerheart" };
+const mailOn = () => !!(MAIL.user && MAIL.pass);
+const EMAIL = /^[^\s@<>()",;:\\]{1,64}@[A-Za-z0-9.-]{1,190}\.[A-Za-z]{2,24}$/;
+const b64 = t => Buffer.from(t, "utf8").toString("base64");
+function sendMail(to, subject, text) {
+  return new Promise((ok, ko) => {
+    if (!mailOn()) return ko(new Error("mail non configuré"));
+    if (!EMAIL.test(to)) return ko(new Error("adresse invalide"));
+    const msg = [
+      "From: =?UTF-8?B?" + b64(MAIL.name) + "?= <" + MAIL.user + ">", "To: <" + to + ">",
+      "Subject: =?UTF-8?B?" + b64(subject) + "?=", "Date: " + new Date().toUTCString().replace("GMT", "+0000"),
+      "Message-ID: <" + crypto.randomBytes(12).toString("hex") + "@" + MAIL.user.split("@")[1] + ">",
+      "MIME-Version: 1.0", "Content-Type: text/plain; charset=UTF-8", "Content-Transfer-Encoding: base64", "",
+      b64(text).match(/.{1,76}/g).join("\r\n")].join("\r\n");
+    const steps = [["", 220], ["EHLO " + (os.hostname() || "localhost"), 250], ["AUTH PLAIN " + Buffer.from("\0" + MAIL.user + "\0" + MAIL.pass).toString("base64"), 235],
+      ["MAIL FROM:<" + MAIL.user + ">", 250], ["RCPT TO:<" + to + ">", 250], ["DATA", 354], [msg + "\r\n.", 250], ["QUIT", 221]];
+    let i = 0, buf = "", done = false;
+    const end = e => { if (done) return; done = true; try { sock.end(); } catch (x) {} e ? ko(e) : ok(); };
+    const sock = tls.connect({ host: MAIL.host, port: MAIL.port, servername: MAIL.host, rejectUnauthorized: process.env.MAIL_INSECURE !== "1" });
+    sock.setTimeout(20e3, () => end(new Error("délai SMTP dépassé")));
+    sock.on("error", end);
+    sock.on("data", d => {
+      buf += d.toString("utf8");
+      let m; while ((m = buf.match(/^(\d{3})([ -])(.*)\r?\n/m)) && buf.indexOf(m[0]) === 0) {
+        buf = buf.slice(m[0].length); if (m[2] === "-") continue;
+        const code = +m[1];
+        if (code !== steps[i][1]) return end(new Error("SMTP " + code + " " + m[3].slice(0, 120)));
+        i++; if (i >= steps.length) return end();
+        sock.write(steps[i][0] + "\r\n");
+      }
+    });
+  });
+}
+const mailCodes = new Map(); // slug -> { h, s, exp, tries, sent: [] }
 
 /* ---------- Réglages modifiables depuis la page admin (stockés dans data, prioritaires sur config.json) ---------- */
 const S = () => store["_cfg"] || (store["_cfg"] = {});
@@ -134,7 +172,7 @@ function accounts() {
   const online = new Set(clients.values());
   return Object.keys(store).filter(k => k.startsWith("_auth/")).map(k => {
     const sl = k.slice(6), r = store[k], chars = charsOf("p_" + sl);
-    return { slug: sl, name: r.n, created: r.t || 0, last: r.last || 0, tmp: !!r.tmp, locked: !!r.locked, recovery: !!r.rh, online: online.has(sl), chars };
+    return { slug: sl, name: r.n, email: r.e || "", created: r.t || 0, last: r.last || 0, tmp: !!r.tmp, locked: !!r.locked, recovery: !!r.rh, online: online.has(sl), chars };
   }).sort((a, b) => (b.last || b.created) - (a.last || a.created));
 }
 async function admin(req, res, u, w, ip) {
@@ -145,7 +183,7 @@ async function admin(req, res, u, w, ip) {
     const pids = new Set(Object.keys(store).filter(k => k.startsWith("players/")).map(k => k.split("/")[1]));
     const orphans = [...pids].filter(pid => !(pid.startsWith("p_") && rec(pid.slice(2)))).map(pid => ({ pid, chars: charsOf(pid) }));
     const bks = fs.readdirSync(BK_DIR).filter(f => f.startsWith("db-")).sort().reverse();
-    return send(res, 200, { accounts: accounts(), orphans, settings: { tableCode: tableCode(), open: signupOpen(), mjFromFile: !S().mjCode }, log: (store["_log"] || []).slice(-120).reverse(), backups: bks, online: clients.size, me: w.sl });
+    return send(res, 200, { accounts: accounts(), orphans, settings: { tableCode: tableCode(), open: signupOpen(), mjFromFile: !S().mjCode }, mail: mailOn() ? MAIL.user : "", log: (store["_log"] || []).slice(-120).reverse(), backups: bks, online: clients.size, me: w.sl });
   }
   if (req.method !== "POST") return send(res, 405, { error: "Méthode non permise." });
   const b = (await body(req).catch(() => null)) || {};
@@ -204,7 +242,7 @@ const server = http.createServer(async (req, res) => {
   res.setHeader("X-Frame-Options", "DENY");
   try {
     if (u.pathname.startsWith("/api/")) {
-      if (u.pathname === "/api/ping") return send(res, 200, { ok: true, needTable: !!tableCode(), open: signupOpen(), publicUrl: tunnelUrl(), v: 2 });
+      if (u.pathname === "/api/ping") return send(res, 200, { ok: true, needTable: !!tableCode(), open: signupOpen(), publicUrl: tunnelUrl(), mail: mailOn(), v: 3 });
       if (tooMany(ip)) return send(res, 429, { error: "Trop d’essais, réessayez dans 10 minutes." });
       const H = k => req.headers[k] || "";
 
@@ -220,7 +258,10 @@ const server = http.createServer(async (req, res) => {
           if (r) return send(res, 409, { error: "Ce nom est déjà pris. Choisissez-en un autre ou connectez-vous." });
           if (!signupOpen() && !(mjc && same(mjc, mjCode()))) return send(res, 403, { error: "Les inscriptions sont fermées. Demandez au MJ de les ouvrir." });
           if (mjc && !same(mjc, mjCode())) { fail(ip, "Code MJ incorrect", raw); return send(res, 401, { error: "Code MJ incorrect." }); }
-          r = store["_auth/" + sl] = { n: raw.slice(0, 30), t: Date.now() }; setPin(r, pin); recovery = newRecovery(r); r.last = Date.now(); persist(); log("Compte créé", r.n, ip);
+          const em = dec(H("x-email")).trim().toLowerCase();
+          if (em && !EMAIL.test(em)) return send(res, 400, { error: "Adresse mail invalide." });
+          r = store["_auth/" + sl] = { n: raw.slice(0, 30), t: Date.now() }; if (em) r.e = em; setPin(r, pin); recovery = newRecovery(r); r.last = Date.now(); persist(); log("Compte créé", r.n, ip);
+          if (r.e && mailOn()) sendMail(r.e, "Bienvenue à la table", "Bonjour " + r.n + ",\n\nVotre compte est créé sur la Table Daggerheart. Cette adresse servira uniquement à vous envoyer un code si vous oubliez votre mot de passe.\n\nVotre code de récupération de secours : " + recovery + "\n\nLa Table Daggerheart").catch(e => log("Échec d’envoi du mail : " + e.message, r.n, ip));
         } else {
           if (!r) { fail(ip); return send(res, 404, { error: "Aucun compte à ce nom. Vérifiez l’orthographe ou créez un compte." }); }
           if (!checkPin(sl, pin)) { fail(ip, "Mauvais mot de passe", r.n); return send(res, 401, { error: "Mot de passe incorrect." }); }
@@ -229,7 +270,7 @@ const server = http.createServer(async (req, res) => {
           if (!r.last || Date.now() - r.last > 30 * 60e3) log(mjc ? "Connexion MJ" : "Connexion", r.n, ip);
           r.last = Date.now(); persist();
         }
-        return send(res, 200, { ok: true, mj: !!mjc, pid: "p_" + sl, name: r.n, created: mode === "create", recovery, mustChange: !!r.tmp, hasRecovery: !!r.rh });
+        return send(res, 200, { ok: true, mj: !!mjc, pid: "p_" + sl, name: r.n, created: mode === "create", recovery, mustChange: !!r.tmp, hasRecovery: !!r.rh, email: r.e || "" });
       }
 
       /* Mot de passe oublié : code de récupération */
@@ -244,6 +285,36 @@ const server = http.createServer(async (req, res) => {
         return send(res, 200, { ok: true, name: r.n, recovery });
       }
 
+      /* Mot de passe oublié : code à 6 chiffres envoyé par mail */
+      if (u.pathname === "/api/forgot" && req.method === "POST") {
+        const b = (await body(req).catch(() => null)) || {};
+        if (tableCode() && !same(H("x-table"), tableCode())) { fail(ip, "Code de table incorrect", b.name); return send(res, 401, { error: "Code de table incorrect." }); }
+        if (!mailOn()) return send(res, 503, { error: "L’envoi de mails n’est pas configuré sur ce serveur." });
+        const sl = slug(b.name), r = rec(sl), generic = { ok: true, message: "Si ce compte a une adresse mail, un code vient d’y être envoyé. Pensez à regarder les spams." };
+        fail(ip); // compte comme une tentative pour limiter les envois
+        if (!r || !r.e || r.locked) { log("Code mail demandé (aucun envoi)", b.name, ip); return send(res, 200, generic); }
+        const m = mailCodes.get(sl) || { sent: [] }; m.sent = m.sent.filter(t => Date.now() - t < 3600e3);
+        if (m.sent.length && Date.now() - m.sent[m.sent.length - 1] < 60e3) return send(res, 429, { error: "Un code vient d’être envoyé. Attendez une minute avant d’en redemander un." });
+        if (m.sent.length >= 5) return send(res, 429, { error: "Trop de codes demandés. Réessayez dans une heure ou demandez au MJ." });
+        const code = String(crypto.randomInt(0, 1e6)).padStart(6, "0"); m.s = crypto.randomBytes(16).toString("hex"); m.h = hashPin(code, m.s); m.exp = Date.now() + 15 * 60e3; m.tries = 0; m.sent.push(Date.now()); mailCodes.set(sl, m);
+        try {
+          await sendMail(r.e, "Votre code : " + code, "Bonjour " + r.n + ",\n\nVoici votre code pour changer votre mot de passe sur la Table Daggerheart :\n\n    " + code + "\n\nIl est valable 15 minutes. Si vous n’avez rien demandé, ignorez ce message : votre mot de passe actuel reste valable.\n\nLa Table Daggerheart");
+          log("Code envoyé par mail", r.n, ip);
+        } catch (e) { m.sent.pop(); delete m.h; log("Échec d’envoi du mail : " + e.message, r.n, ip); console.error("Mail :", e.message); return send(res, 502, { error: "L’envoi du mail a échoué. Réessayez plus tard ou demandez au MJ." }); }
+        return send(res, 200, generic);
+      }
+      if (u.pathname === "/api/forgot/confirm" && req.method === "POST") {
+        const b = (await body(req).catch(() => null)) || {};
+        if (tableCode() && !same(H("x-table"), tableCode())) { fail(ip); return send(res, 401, { error: "Code de table incorrect." }); }
+        const sl = slug(b.name), r = rec(sl), m = mailCodes.get(sl), code = String(b.code || "").replace(/\D/g, "");
+        if (!r || !m || !m.h || Date.now() > m.exp) { fail(ip); return send(res, 401, { error: "Code expiré ou invalide. Demandez-en un nouveau." }); }
+        if (r.locked) return send(res, 403, { error: "Ce compte est bloqué. Contactez le MJ." });
+        if (code.length !== 6 || !same(hashPin(code, m.s), m.h)) { m.tries++; fail(ip, "Code mail incorrect", r.n); if (m.tries >= 5) delete m.h; return send(res, 401, { error: m.h ? "Code incorrect." : "Trop d’erreurs. Demandez un nouveau code." }); }
+        if (!okPin(b.pin)) return send(res, 400, { error: "Mot de passe : 4 caractères minimum." });
+        delete m.h; setPin(r, b.pin); kick(sl); persist(); log("Mot de passe changé par code mail", r.n, ip);
+        return send(res, 200, { ok: true, name: r.n });
+      }
+
       const w = who(req, u.pathname === "/api/events" ? u.searchParams : null);
       if (!w) { fail(ip); return send(res, 401, { error: "Non autorisé." }); }
 
@@ -254,6 +325,13 @@ const server = http.createServer(async (req, res) => {
         const r = rec(w.sl); setPin(r, b.pin); const recovery = r.rh ? "" : newRecovery(r);
         persist(); log(w.tmp ? "Mot de passe choisi après code provisoire" : "Mot de passe modifié", r.n, ip);
         return send(res, 200, { ok: true, recovery });
+      }
+      if (u.pathname === "/api/account/email" && req.method === "POST") {
+        const b = (await body(req).catch(() => null)) || {}, r = rec(w.sl), em = String(b.email || "").trim().toLowerCase();
+        if (em && !EMAIL.test(em)) return send(res, 400, { error: "Adresse mail invalide." });
+        if (em && mailOn()) { try { await sendMail(em, "Adresse enregistrée", "Bonjour " + r.n + ",\n\nCette adresse est maintenant liée à votre compte sur la Table Daggerheart. Elle servira uniquement à vous envoyer un code si vous oubliez votre mot de passe.\n\nLa Table Daggerheart"); } catch (e) { log("Échec d’envoi du mail : " + e.message, r.n, ip); return send(res, 502, { error: "Impossible d’envoyer un mail à cette adresse. Vérifiez-la." }); } }
+        if (em) r.e = em; else delete r.e; persist(); log(em ? "Adresse mail enregistrée" : "Adresse mail retirée", r.n, ip);
+        return send(res, 200, { ok: true, email: r.e || "" });
       }
       if (u.pathname === "/api/account/recovery" && req.method === "POST") { const r = rec(w.sl); const recovery = newRecovery(r); persist(); log("Nouveau code de récupération", r.n, ip); return send(res, 200, { ok: true, recovery }); }
       if (w.tmp) return send(res, 403, { error: "Choisissez d’abord votre nouveau mot de passe." });
@@ -291,4 +369,4 @@ const server = http.createServer(async (req, res) => {
     fs.createReadStream(fp).pipe(res);
   } catch (e) { send(res, 500, { error: "Erreur serveur." }); }
 });
-server.listen(CFG.port, () => console.log("Table Daggerheart en ligne sur le port " + CFG.port));
+server.listen(CFG.port, () => console.log("Table Daggerheart en ligne sur le port " + CFG.port + (mailOn() ? " (mails via " + MAIL.user + ")" : " (mails désactivés)")));

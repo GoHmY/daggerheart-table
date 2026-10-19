@@ -455,9 +455,9 @@ function makeServerDb(){const ls=new Set();
  const col=p=>{const get=()=>api("GET","api/col?p="+enc(p)).then(a=>{const docs=(a||[]).map(x=>snap(x.id,x.data));return{docs,size:docs.length,empty:!docs.length}});
   return{path:p,doc:id=>doc(p+"/"+id),get,onSnapshot:(n,e)=>listen(q=>q.slice(0,q.lastIndexOf("/"))===p,get,n,e)}};
  return{doc,collection:col}}
-async function srvDetect(){if(!/^https?:$/.test(location.protocol))return false;try{const r=await fetch("api/ping",{cache:"no-store"});if(!r.ok)return false;const j=await r.json();if(!j||!j.ok)return false;SRV.on=true;SRV.needTable=!!j.needTable;SRV.publicUrl=j.publicUrl||"";SRV.open=j.open!==false;SRV.v=j.v||1;return true}catch(e){return false}}
-async function srvLogin(mode){const j=await fetch("api/login",{method:"POST",headers:{"X-Table":SRV.table,"X-MJ":SRV.mj,"X-Player":encodeURIComponent(SRV.name),"X-Pin":SRV.pin,"X-Mode":mode||"login"},cache:"no-store"}).then(async r=>{const j=await r.json().catch(()=>null);if(!r.ok)throw{code:r.status,message:(j&&j.error)||"Erreur "+r.status};return j});
- SRV.isMJ=!!j.mj;SRV.pid=j.pid;SRV.name=j.name||SRV.name;SRV.created=!!j.created;SRV.mustChange=!!j.mustChange;SRV.hasRecovery=!!j.hasRecovery||!!j.recovery;srvSave();return j}
+async function srvDetect(){if(!/^https?:$/.test(location.protocol))return false;try{const r=await fetch("api/ping",{cache:"no-store"});if(!r.ok)return false;const j=await r.json();if(!j||!j.ok)return false;SRV.on=true;SRV.needTable=!!j.needTable;SRV.publicUrl=j.publicUrl||"";SRV.open=j.open!==false;SRV.mail=!!j.mail;SRV.v=j.v||1;return true}catch(e){return false}}
+async function srvLogin(mode){const j=await fetch("api/login",{method:"POST",headers:{"X-Table":SRV.table,"X-MJ":SRV.mj,"X-Player":encodeURIComponent(SRV.name),"X-Pin":SRV.pin,"X-Mode":mode||"login","X-Email":mode==="create"?encodeURIComponent(SRV.email||""):""},cache:"no-store"}).then(async r=>{const j=await r.json().catch(()=>null);if(!r.ok)throw{code:r.status,message:(j&&j.error)||"Erreur "+r.status};return j});
+ SRV.isMJ=!!j.mj;SRV.pid=j.pid;SRV.name=j.name||SRV.name;SRV.created=!!j.created;SRV.mustChange=!!j.mustChange;SRV.hasRecovery=!!j.hasRecovery||!!j.recovery;SRV.email=j.email||"";srvSave();return j}
 const lgv=id=>{const e=document.getElementById(id);return e?e.value.trim():null};
 const lgraw=id=>{const e=document.getElementById(id);return e?e.value:null};
 function lgShow(err){SRV.err=err||"";document.getElementById("main").innerHTML=renderLogin()}
@@ -477,13 +477,20 @@ function renderLogin(){const err=SRV.err;SRV.err="";const scr=SRV.screen||"login
  if(scr==="create")body=`<p class="small muted">Choisissez votre nom de joueur et un mot de passe. Ils vous serviront à retrouver vos fiches sur tous vos appareils.</p>${SRV.open===false?`<p class="warn">Les inscriptions sont fermées pour le moment. Demandez au MJ de les ouvrir.</p>`:""}
   ${tbl}<div style="margin-top:10px">${name}</div>
   <div class="row" style="margin-top:10px"><label class="f">Mot de passe<input id="lg-pin" type="password" autocomplete="new-password" placeholder="4 caractères minimum"></label>
-  <label class="f">Confirmer le mot de passe<input id="lg-pin2" type="password" autocomplete="new-password" placeholder="Retapez-le"></label></div>${mj}
+  <label class="f">Confirmer le mot de passe<input id="lg-pin2" type="password" autocomplete="new-password" placeholder="Retapez-le"></label></div>
+  ${SRV.mail?`<label class="f" style="margin-top:10px">Adresse mail (facultative)<input id="lg-email" type="email" autocomplete="email" placeholder="Pour recevoir un code si vous oubliez votre mot de passe"></label>`:""}${mj}
   ${err?`<p class="warn" style="margin-top:10px">${esc(err)}</p>`:""}<button class="btn pri" data-act="srvcreate" style="margin-top:14px">Créer mon compte</button>`;
- else if(scr==="forgot")body=`<p class="small muted">Entrez le code de récupération reçu à la création de votre compte, puis choisissez un nouveau mot de passe. Pas de code ? Le MJ peut vous donner un code provisoire.</p>
-  ${tbl}<div class="row" style="margin-top:10px">${name}<label class="f">Code de récupération<input id="lg-rec" autocomplete="off" placeholder="XXXX-XXXX-XXXX" style="text-transform:uppercase"></label></div>
-  <div class="row" style="margin-top:10px"><label class="f">Nouveau mot de passe<input id="lg-pin" type="password" autocomplete="new-password" placeholder="4 caractères minimum"></label>
-  <label class="f">Confirmer le mot de passe<input id="lg-pin2" type="password" autocomplete="new-password"></label></div>
-  ${err?`<p class="warn" style="margin-top:10px">${esc(err)}</p>`:""}<button class="btn pri" data-act="srvrecover" style="margin-top:14px">Changer mon mot de passe</button>`;
+ else if(scr==="forgot"){const fr=`<label class="f">Code de récupération<input id="lg-rec" autocomplete="off" placeholder="XXXX-XXXX-XXXX" style="text-transform:uppercase"></label>`;
+  const pins=`<div class="row" style="margin-top:10px"><label class="f">Nouveau mot de passe<input id="lg-pin" type="password" autocomplete="new-password" placeholder="4 caractères minimum"></label><label class="f">Confirmer le mot de passe<input id="lg-pin2" type="password" autocomplete="new-password"></label></div>`;
+  const e=err?`<p class="warn" style="margin-top:10px">${esc(err)}</p>`:"",info=SRV.info?`<p class="note" style="margin-top:10px">${esc(SRV.info)}</p>`:"";SRV.info="";
+  if(SRV.mail&&SRV.mailSent)body=`<p class="small muted">Entrez le code à 6 chiffres reçu par mail, puis votre nouveau mot de passe.</p>${tbl}<div class="row" style="margin-top:10px">${name}<label class="f">Code reçu par mail<input id="lg-mcode" inputmode="numeric" autocomplete="one-time-code" maxlength="7" placeholder="123456"></label></div>${pins}${info}${e}
+   <div class="flexgap" style="margin-top:14px"><button class="btn pri" data-act="srvmailok">Changer mon mot de passe</button><button class="btn" data-act="srvmailsend">Renvoyer un code</button></div>`;
+  else if(SRV.mail)body=`<p class="small muted">Entrez votre nom de joueur : un code vous sera envoyé à l’adresse mail de votre compte.</p>${tbl}<div style="margin-top:10px">${name}</div>${info}${e}
+   <button class="btn pri" data-act="srvmailsend" style="margin-top:14px">Recevoir un code par mail</button>
+   <details class="fold" style="margin-top:14px"><summary>J’ai mon code de récupération</summary><div style="margin-top:8px">${fr}${pins}<button class="btn" data-act="srvrecover" style="margin-top:10px">Changer mon mot de passe</button></div></details>
+   <p class="small muted" style="margin-top:10px">Ni mail ni code ? Le MJ peut vous donner un code provisoire.</p>`;
+  else body=`<p class="small muted">Entrez le code de récupération reçu à la création de votre compte, puis choisissez un nouveau mot de passe. Pas de code ? Le MJ peut vous donner un code provisoire.</p>
+  ${tbl}<div class="row" style="margin-top:10px">${name}${fr}</div>${pins}${e}<button class="btn pri" data-act="srvrecover" style="margin-top:14px">Changer mon mot de passe</button>`}
  else body=`${tbl}<div class="row" style="margin-top:10px">${name}<label class="f">Mot de passe<input id="lg-pin" type="password" autocomplete="current-password"></label></div>${mj}
   ${err?`<p class="warn" style="margin-top:10px">${esc(err)}</p>`:""}<button class="btn pri" data-act="srvlogin" style="margin-top:14px">Entrer</button>
   <p class="small muted" style="margin-top:10px">Mot de passe oublié ? <a href="#" data-act="lgtab" data-k="forgot">Le récupérer</a>.</p>`;
@@ -502,13 +509,17 @@ function lgPair(a,b){const p=lgraw(a)||"",q=lgraw(b);if(p.length<4){lgShow("Le m
 async function afterAuth(){SRV.login=false;SRV.screen="login";if(SRV.mustChange){SRV.login=true;SRV.screen="change";lgShow();return}connect()}
 async function srvTryLogin(){if(!lgCommon())return;SRV.pin=lgraw("lg-pin")||"";if(SRV.pin.length<4){lgShow("Entrez votre mot de passe.");return}
  try{await srvLogin("login");afterAuth()}catch(e){if(e.code===401&&SRV.mj&&/MJ/.test(e.message))SRV.mj="";lgShow(e.message||"Connexion impossible.")}}
-async function srvTryCreate(){if(!lgCommon())return;const p=lgPair("lg-pin","lg-pin2");if(!p)return;SRV.pin=p;
+async function srvTryCreate(){if(!lgCommon())return;const p=lgPair("lg-pin","lg-pin2");if(!p)return;SRV.email=lgv("lg-email")||"";if(SRV.email&&!/^\S+@\S+\.\S+$/.test(SRV.email)){lgShow("Adresse mail invalide.");return}SRV.pin=p;
  try{const j=await srvLogin("create");toast("Bienvenue "+SRV.name+" !");SRV.recCode=j.recovery;SRV.screen="recovery";SRV.login=true;lgShow()}catch(e){if(e.code===401&&SRV.mj&&/MJ/.test(e.message))SRV.mj="";lgShow(e.message||"Création impossible.")}}
 async function srvTryRecover(){if(!lgCommon())return;const code=lgv("lg-rec")||"";if(code.replace(/[^a-z0-9]/gi,"").length!==12){lgShow("Le code de récupération fait 12 caractères.");return}const p=lgPair("lg-pin","lg-pin2");if(!p)return;
  try{const j=await fetch("api/recover",{method:"POST",headers:{"Content-Type":"application/json","X-Table":SRV.table},body:JSON.stringify({name:SRV.name,code,pin:p}),cache:"no-store"}).then(async r=>{const j=await r.json().catch(()=>null);if(!r.ok)throw{message:(j&&j.error)||"Erreur "+r.status};return j});
   SRV.pin=p;await srvLogin("login");toast("Mot de passe changé.");SRV.recCode=j.recovery;SRV.screen="recovery";SRV.login=true;lgShow()}catch(e){lgShow(e.message||"Récupération impossible.")}}
 async function srvTryChange(){const p=lgPair("lg-new","lg-new2");if(!p)return;
  try{const j=await api("POST","api/account/pin",{pin:p});SRV.pin=p;srvSave();await srvLogin("login");if(j.recovery){SRV.recCode=j.recovery;SRV.screen="recovery";lgShow();return}afterAuth()}catch(e){lgShow(e.message||"Échec.")}}
+const pubPost=(url,data)=>fetch(url,{method:"POST",headers:{"Content-Type":"application/json","X-Table":SRV.table},body:JSON.stringify(data),cache:"no-store"}).then(async r=>{const j=await r.json().catch(()=>null);if(!r.ok)throw{code:r.status,message:(j&&j.error)||"Erreur "+r.status};return j});
+async function srvMailSend(){if(!lgCommon())return;try{const j=await pubPost("api/forgot",{name:SRV.name});SRV.mailSent=true;SRV.info=j.message;lgShow()}catch(e){lgShow(e.message||"Envoi impossible.")}}
+async function srvMailOk(){if(!lgCommon())return;const code=(lgv("lg-mcode")||"").replace(/\D/g,"");if(code.length!==6){lgShow("Le code reçu par mail fait 6 chiffres.");return}const p=lgPair("lg-pin","lg-pin2");if(!p)return;
+ try{await pubPost("api/forgot/confirm",{name:SRV.name,code,pin:p});SRV.pin=p;SRV.mailSent=false;await srvLogin("login");toast("Mot de passe changé.");afterAuth()}catch(e){lgShow(e.message||"Échec.")}}
 function recFile(){const t="Table Daggerheart\nJoueur : "+SRV.name+"\nCode de récupération : "+SRV.recCode+"\n\nGardez ce fichier en lieu sûr. Il permet de changer votre mot de passe si vous l’oubliez.\n";const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/plain"}));a.download="daggerheart-recuperation-"+(SRV.name||"joueur")+".txt";document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
 function srvLogout(){SRV.mj="";SRV.pin="";srvSave();location.reload()}
 /* Mon compte */
@@ -516,9 +527,13 @@ function renderAccount(){if(!SRV.on||SRV.login)return"";const open=SRV.acct;
  return `<div class="note"><div class="flexgap" style="justify-content:space-between"><span>Connecté en tant que <b>${esc(SRV.name)}</b>${SRV.isMJ?" (MJ)":""}.</span><span class="flexgap"><button class="btn sm" data-act="acct">Mon compte</button><button class="btn sm" data-act="srvlogout">Se déconnecter</button></span></div>
   ${!SRV.hasRecovery?`<p class="warn" style="margin-top:8px">Votre compte n’a pas encore de code de récupération. <button class="btn sm" data-act="newrec">En créer un</button></p>`:""}
   ${open?`<div style="margin-top:10px"><div class="row"><label class="f">Nouveau mot de passe<input id="ac-pin" type="password" autocomplete="new-password"></label><label class="f">Confirmer<input id="ac-pin2" type="password" autocomplete="new-password"></label></div>
-  <div class="flexgap" style="margin-top:8px"><button class="btn sm pri" data-act="acpin">Changer mon mot de passe</button><button class="btn sm" data-act="newrec">Nouveau code de récupération</button></div></div>`:""}</div>`}
+  <div class="flexgap" style="margin-top:8px"><button class="btn sm pri" data-act="acpin">Changer mon mot de passe</button><button class="btn sm" data-act="newrec">Nouveau code de récupération</button></div>
+  ${SRV.mail?`<div class="row" style="margin-top:12px"><label class="f">Adresse mail de récupération<input id="ac-email" type="email" value="${esc(SRV.email||"")}" autocomplete="email" placeholder="Aucune"></label><div style="align-self:end"><button class="btn sm" data-act="acemail">Enregistrer l’adresse</button></div></div>`:""}</div>`:""}
+  ${SRV.mail&&!SRV.email&&!open?`<p class="small muted" style="margin-top:8px">Ajoutez une adresse mail dans « Mon compte » pour pouvoir récupérer votre mot de passe facilement.</p>`:""}</div>`}
 async function accPin(){const p=lgraw("ac-pin")||"",q=lgraw("ac-pin2");if(p.length<4){toast("4 caractères minimum.");return}if(p!==q){toast("Les deux mots de passe ne correspondent pas.");return}
  try{await api("POST","api/account/pin",{pin:p});SRV.pin=p;srvSave();toast("Mot de passe changé.");setTimeout(()=>location.reload(),900)}catch(e){toast(e.message||"Échec.")}}
+async function accEmail(){const em=lgv("ac-email")||"";if(em&&!/^\S+@\S+\.\S+$/.test(em)){toast("Adresse mail invalide.");return}
+ try{const j=await api("POST","api/account/email",{email:em});SRV.email=j.email;srvSave();toast(em?"Adresse enregistrée. Un mail de confirmation vient d’être envoyé.":"Adresse retirée.");render()}catch(e){toast(e.message||"Échec.")}}
 async function accRec(){try{const j=await api("POST","api/account/recovery");SRV.recCode=j.recovery;SRV.hasRecovery=true;SRV.screen="recovery";SRV.login=true;SRV.back=true;render()}catch(e){toast(e.message||"Échec.")}}
 
 async function connect(){
@@ -1051,7 +1066,7 @@ document.addEventListener("click",e=>{
  if(a.startsWith("adm")&&admClick(a,b))return;
  switch(a){
   case "srvlogin":srvTryLogin();return;
-  case "lgtab":{["lg-table","lg-name","lg-mj"].forEach(id=>{const v=lgv(id);if(v!==null)SRV[id.slice(3)==="name"?"name":id.slice(3)]=v});SRV.screen=b.dataset.k;lgShow();return}
+  case "lgtab":{["lg-table","lg-name","lg-mj"].forEach(id=>{const v=lgv(id);if(v!==null)SRV[id.slice(3)==="name"?"name":id.slice(3)]=v});SRV.screen=b.dataset.k;SRV.mailSent=false;lgShow();return}
   case "srvcreate":srvTryCreate();return;
   case "srvrecover":srvTryRecover();return;
   case "srvchange":srvTryChange();return;
@@ -1061,6 +1076,9 @@ document.addEventListener("click",e=>{
   case "acct":SRV.acct=!SRV.acct;render();return;
   case "acpin":accPin();return;
   case "newrec":accRec();return;
+  case "acemail":accEmail();return;
+  case "srvmailsend":srvMailSend();return;
+  case "srvmailok":srvMailOk();return;
   case "resetpin":{if(!b.dataset.armed){b.dataset.armed="1";b.textContent="Confirmer";setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent="Code provisoire"}},3000);return}
    api("POST","api/admin/reset?name="+encodeURIComponent(b.dataset.k),{}).then(j=>{ADM.temp={name:b.dataset.k,code:j.temp};L.gtab="admin";admLoad();render()},e=>toast(e.message||"Échec."));return}
   case "copyurl":{try{navigator.clipboard.writeText(SRV.publicUrl).then(()=>toast("Adresse copiée."),()=>toast(SRV.publicUrl))}catch(e){toast(SRV.publicUrl)}return}
@@ -1202,8 +1220,8 @@ function gAdmin(){if(!SRV.on)return`<section class="box"><p>La page admin est di
   ${ADM.temp?`<div class="note fear" style="margin-top:12px"><div class="flexgap" style="justify-content:space-between"><span>Code provisoire de <b>${esc(ADM.temp.name)}</b> : <b style="font:700 1.3rem var(--f-display);letter-spacing:.1em">${esc(ADM.temp.code)}</b><br><span class="small muted">Donnez-le au joueur. Il devra choisir un nouveau mot de passe à sa connexion.</span></span><button class="btn sm" data-act="admtempok">Fermer</button></div></div>`:""}
  </section>
  <section class="box"><h2>Joueurs</h2><div class="scroll"><table class="t"><thead><tr><th>Joueur</th><th>Statut</th><th>Inscrit</th><th>Activité</th><th>Personnages</th><th>Actions</th></tr></thead><tbody>
- ${A.map(a=>`<tr${a.locked?' class="dis"':""}><td><b>${esc(a.name)}</b>${a.slug===d.me?' <span class="small muted">(vous)</span>':""}</td>
-  <td><div class="flexgap">${a.online?chip("En ligne","var(--ok)"):""}${a.locked?chip("Bloqué","var(--hp)"):""}${a.tmp?chip("Code provisoire","var(--fear)"):""}${!a.recovery?chip("Sans code récup.","var(--muted,#999)"):""}</div></td>
+ ${A.map(a=>`<tr${a.locked?' class="dis"':""}><td><b>${esc(a.name)}</b>${a.slug===d.me?' <span class="small muted">(vous)</span>':""}${a.email?`<br><span class="small muted">${esc(a.email)}</span>`:""}</td>
+  <td><div class="flexgap">${a.online?chip("En ligne","var(--ok)"):""}${a.locked?chip("Bloqué","var(--hp)"):""}${a.tmp?chip("Code provisoire","var(--fear)"):""}${!a.recovery?chip("Sans code récup.","var(--muted,#999)"):""}${d.mail&&!a.email?chip("Sans mail","var(--muted,#999)"):""}</div></td>
   <td class="small">${dt(a.created)}</td><td class="small">${ago(a.last)}</td><td>${admChars(a.chars,"p_"+a.slug,A)}</td>
   <td><div class="flexgap"><button class="btn sm" data-act="admreset" data-k="${esc(a.slug)}">Code provisoire</button>${a.slug!==d.me?`<button class="btn sm" data-act="admlock" data-k="${esc(a.slug)}">${a.locked?"Débloquer":"Bloquer"}</button><button class="btn sm danger" data-act="admdel" data-k="${esc(a.slug)}" data-n="${esc(a.name)}">Supprimer</button>`:""}</div></td></tr>`).join("")||`<tr><td colspan="6" class="muted">Aucun compte.</td></tr>`}
  </tbody></table></div><p class="small muted" style="margin-top:8px">« Supprimer » efface le compte et toutes ses fiches. « Bloquer » coupe l’accès sans rien effacer.</p></section>
@@ -1212,7 +1230,8 @@ function gAdmin(){if(!SRV.on)return`<section class="box"><p>La page admin est di
   <div class="row"><label class="f">Code de la table<input id="adm-table" value="${esc(s.tableCode)}" autocomplete="off"></label><div style="align-self:end"><button class="btn sm" data-act="admtable">Enregistrer</button></div></div>
   <p class="small muted" style="margin-top:6px">Changer le code de table oblige tous les joueurs à le retaper à leur prochaine visite.</p>
   <div class="row" style="margin-top:12px"><label class="f">Nouveau code MJ<input id="adm-mj" type="password" autocomplete="new-password" placeholder="8 caractères minimum"></label><label class="f">Confirmer<input id="adm-mj2" type="password" autocomplete="new-password"></label></div>
-  <button class="btn sm" data-act="admmj" style="margin-top:8px">Changer le code MJ</button></section>
+  <button class="btn sm" data-act="admmj" style="margin-top:8px">Changer le code MJ</button>
+  <p class="small muted" style="margin-top:12px">Mails de récupération : ${d.mail?`envoyés depuis <b>${esc(d.mail)}</b>`:"désactivés (ajoutez mailUser et mailPass dans config.json)"}.</p></section>
  <section class="box"><div class="flexgap" style="justify-content:space-between"><h2 style="margin:0">Journal</h2><span class="flexgap"><button class="btn sm" data-act="admexport">Exporter toutes les fiches</button><button class="btn sm" data-act="admclearlog">Vider</button></span></div>
   <div class="scroll" style="max-height:340px;margin-top:10px"><table class="t"><thead><tr><th>Date</th><th>Évènement</th><th>Joueur</th><th>Adresse IP</th></tr></thead><tbody>
   ${d.log.map(l=>`<tr><td class="small">${dt(l.t)}</td><td${/incorrect|échou|refus|Mauvais/i.test(l.ev)?' style="color:var(--hp)"':""}>${esc(l.ev)}</td><td>${esc(l.who)}</td><td class="small muted">${esc(l.ip)}</td></tr>`).join("")||`<tr><td colspan="4" class="muted">Rien pour l’instant.</td></tr>`}
