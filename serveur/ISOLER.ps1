@@ -17,8 +17,22 @@ foreach ($g in Get-LocalGroup) { try { Remove-LocalGroupMember -Group $g.Name -M
 Stop-ScheduledTask -TaskName $task -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 2
 New-Item -ItemType Directory -Force (Join-Path $dir 'data') | Out-Null
-icacls $dir /inheritance:r /grant:r '*S-1-5-32-544:(OI)(CI)F' '*S-1-5-18:(OI)(CI)F' "${user}:(OI)(CI)RX" /T /C /Q | Out-Null
+takeown /F $dir /R /A /D O | Out-Null
+icacls $dir /inheritance:r /grant:r '*S-1-5-32-544:(OI)(CI)F' '*S-1-5-18:(OI)(CI)F' "${user}:(OI)(CI)RX" /C /Q | Out-Null
+icacls "$dir\*" /reset /T /C /Q | Out-Null
 icacls (Join-Path $dir 'data') /grant "${user}:(OI)(CI)M" /T /C /Q | Out-Null
+
+# 2 bis. Droit de lancer la tache, interdiction de toute connexion directe ou Bureau a distance
+$sid = (Get-LocalUser $user).SID.Value
+$inf = Join-Path $env:TEMP 'ur.inf'
+secedit /export /cfg $inf /areas USER_RIGHTS | Out-Null
+$t = Get-Content $inf
+foreach ($n in 'SeBatchLogonRight', 'SeDenyInteractiveLogonRight', 'SeDenyRemoteInteractiveLogonRight') {
+  if (($t -match "^$n = ") -and -not ($t -match "^$n = .*\*$sid")) { $t = $t -replace "^($n = .*)$", "`$1,*$sid" }
+  elseif (-not ($t -match "^$n = ")) { $t = $t -replace '^\[Privilege Rights\]$', "[Privilege Rights]`r`n$n = *$sid" }
+}
+$t | Set-Content $inf -Encoding Unicode
+secedit /configure /db (Join-Path $env:TEMP 'ur.sdb') /cfg $inf /areas USER_RIGHTS | Out-Null
 
 # 3. Interdit explicitement les dossiers sensibles connus
 foreach ($p in 'C:\FTP', 'C:\palworld-backups') { if (Test-Path $p) { icacls $p /deny "${user}:(OI)(CI)F" /C /Q | Out-Null } }
