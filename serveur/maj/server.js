@@ -197,7 +197,7 @@ function logTunnelUrl() {
   try { const m = fs.readFileSync(path.join(DATA_DIR, "tunnel.log"), "utf8").match(/https:\/\/[a-z0-9-]+\.trycloudflare\.com/g); if (m) u = m[m.length - 1]; } catch (e) {}
   tunnelCache = { t: Date.now(), u }; return u;
 }
-function tunnelUrl() { return tunnelOk.url && Date.now() - tunnelOk.t < 6 * 60e3 ? tunnelOk.url : ""; }
+function tunnelUrl() { if (typeof httpsUp === "function" && httpsUp()) return "https://" + DOMAIN; return tunnelOk.url && Date.now() - tunnelOk.t < 6 * 60e3 ? tunnelOk.url : ""; }
 function probe(url) {
   return new Promise(ok => {
     if (!url) return ok(false);
@@ -224,6 +224,91 @@ async function checkTunnel() {
 setTimeout(checkTunnel, 20e3); setInterval(checkTunnel, 2 * 60e3);
 process.on("exit", () => { try { ownTunnel.proc && ownTunnel.proc.kill(); } catch (e) {} });
 function isLocalHost(h) { return /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i.test(h || ""); }
+
+
+/* ---------- HTTPS sur le nom de domaine : certificat Let's Encrypt automatique (HTTP-01), même port que HTTP ---------- */
+// Le port d'écoute accepte HTTP et HTTPS (détection du premier octet). La box redirige 80 et 443 vers ce port.
+const net = require("net");
+const DOMAIN = String(CFG.domain || "gohmy-serv.freeboxos.fr").toLowerCase();
+const TLS_DIR = path.join(DATA_DIR, "tls");
+const ACME_DIR = "https://acme-v02.api.letsencrypt.org/directory";
+const acmeTokens = new Map();
+let tlsSrv = null, tlsInfo = { notAfter: 0, ok: false, t: 0, last: "" };
+const b64u = b => Buffer.from(b).toString("base64").replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
+function der(tag, body) { const l = body.length; const len = l < 128 ? Buffer.from([l]) : l < 256 ? Buffer.from([0x81, l]) : Buffer.from([0x82, l >> 8, l & 255]); return Buffer.concat([Buffer.from([tag]), len, body]); }
+const seq = (...a) => der(0x30, Buffer.concat(a));
+function oid(s) { const p = s.split(".").map(Number), out = [40 * p[0] + p[1]]; for (const n of p.slice(2)) { const b = [n & 127]; let v = n >> 7; while (v) { b.unshift((v & 127) | 128); v >>= 7; } out.push(...b); } return der(0x06, Buffer.from(out)); }
+function makeCsr(key, domain) {
+  const spki = crypto.createPublicKey(key).export({ type: "spki", format: "der" });
+  const name = seq(der(0x31, seq(oid("2.5.4.3"), der(0x0c, Buffer.from(domain)))));
+  const san = seq(oid("2.5.29.17"), der(0x04, seq(der(0x82, Buffer.from(domain)))));
+  const attrs = der(0xa0, seq(oid("1.2.840.113549.1.9.14"), der(0x31, seq(san))));
+  const info = seq(der(0x02, Buffer.from([0])), name, spki, attrs);
+  const sig = crypto.sign("sha256", info, { key, dsaEncoding: "der" });
+  return seq(info, seq(oid("1.2.840.10045.4.3.2")), der(0x03, Buffer.concat([Buffer.from([0]), sig])));
+}
+function loadKey(f) { const fp = path.join(TLS_DIR, f); if (fs.existsSync(fp)) return crypto.createPrivateKey(fs.readFileSync(fp)); const k = crypto.generateKeyPairSync("ec", { namedCurve: "P-256" }).privateKey; fs.writeFileSync(fp, k.export({ type: "pkcs8", format: "pem" }), { mode: 0o600 }); return k; }
+function hreq(method, url, body, headers = {}) {
+  return new Promise((ok, ko) => {
+    const r = https.request(url, { method, headers: Object.assign({ "User-Agent": "table-daggerheart" }, headers), timeout: 30000 }, res => { const ch = []; res.on("data", c => ch.push(c)); res.on("end", () => ok({ status: res.statusCode, headers: res.headers, body: Buffer.concat(ch).toString() })); });
+    r.on("timeout", () => r.destroy(new Error("délai dépassé"))); r.on("error", ko); if (body) r.write(body); r.end();
+  });
+}
+async function obtainCert() {
+  fs.mkdirSync(TLS_DIR, { recursive: true });
+  const akey = loadKey("account.pem"), jwkFull = crypto.createPublicKey(akey).export({ format: "jwk" });
+  const jwk = { crv: jwkFull.crv, kty: jwkFull.kty, x: jwkFull.x, y: jwkFull.y };
+  const thumb = b64u(crypto.createHash("sha256").update(JSON.stringify(jwk)).digest());
+  const dir = JSON.parse((await hreq("GET", ACME_DIR)).body);
+  let nonce = (await hreq("HEAD", dir.newNonce)).headers["replay-nonce"], kid = null;
+  const post = async (url, payload) => {
+    const prot = { alg: "ES256", nonce, url }; if (kid) prot.kid = kid; else prot.jwk = jwk;
+    const p64 = b64u(JSON.stringify(prot)), pl64 = payload === null ? "" : b64u(JSON.stringify(payload));
+    const sig = b64u(crypto.sign("sha256", Buffer.from(p64 + "." + pl64), { key: akey, dsaEncoding: "ieee-p1363" }));
+    const r = await hreq("POST", url, JSON.stringify({ protected: p64, payload: pl64, signature: sig }), { "Content-Type": "application/jose+json" });
+    nonce = r.headers["replay-nonce"] || nonce;
+    if (r.status >= 400) throw new Error("ACME " + r.status + " " + r.body.slice(0, 200));
+    return r;
+  };
+  const acc = await post(dir.newAccount, { termsOfServiceAgreed: true }); kid = acc.headers.location;
+  const ord = await post(dir.newOrder, { identifiers: [{ type: "dns", value: DOMAIN }] });
+  const orderUrl = ord.headers.location; let order = JSON.parse(ord.body);
+  for (const az of order.authorizations) {
+    const a = JSON.parse((await post(az, null)).body); if (a.status === "valid") continue;
+    const ch = a.challenges.find(c => c.type === "http-01"); acmeTokens.set(ch.token, ch.token + "." + thumb);
+    await post(ch.url, {});
+    for (let i = 0; i < 30; i++) { await new Promise(r => setTimeout(r, 3000)); const st = JSON.parse((await post(az, null)).body); if (st.status === "valid") break; if (st.status === "invalid") throw new Error("Validation refusée : " + JSON.stringify(st.challenges.find(c => c.type === "http-01").error || {}).slice(0, 200)); }
+  }
+  const ckey = crypto.generateKeyPairSync("ec", { namedCurve: "P-256" }).privateKey;
+  await post(order.finalize, { csr: b64u(makeCsr(ckey, DOMAIN)) });
+  for (let i = 0; i < 30 && order.status !== "valid"; i++) { await new Promise(r => setTimeout(r, 2000)); order = JSON.parse((await post(orderUrl, null)).body); if (order.status === "invalid") throw new Error("Commande refusée."); }
+  const pem = (await post(order.certificate, null)).body;
+  fs.writeFileSync(path.join(TLS_DIR, "key.pem"), ckey.export({ type: "pkcs8", format: "pem" }), { mode: 0o600 });
+  fs.writeFileSync(path.join(TLS_DIR, "cert.pem"), pem);
+  acmeTokens.clear();
+}
+function loadTls() {
+  try {
+    const key = fs.readFileSync(path.join(TLS_DIR, "key.pem")), cert = fs.readFileSync(path.join(TLS_DIR, "cert.pem"));
+    const x = new crypto.X509Certificate(cert); tlsInfo.notAfter = Date.parse(x.validTo);
+    if (tlsSrv) tlsSrv.setSecureContext({ key, cert }); else tlsSrv = tls.createServer({ key, cert, minVersion: "TLSv1.2" }, s => server.emit("connection", s));
+    return true;
+  } catch (e) { return false; }
+}
+let acmeBusy = false;
+async function ensureCert() {
+  if (acmeBusy) return; acmeBusy = true;
+  try {
+    const have = loadTls();
+    if (CFG.https === false) return;
+    if (!have || tlsInfo.notAfter - Date.now() < 30 * 864e5) { await obtainCert(); loadTls(); tlsInfo.last = "Certificat obtenu pour " + DOMAIN; slog("Certificat HTTPS obtenu pour " + DOMAIN, "systeme", "-"); }
+  } catch (e) { tlsInfo.last = "Échec certificat : " + e.message; slog("Certificat HTTPS : " + e.message, "systeme", "-"); }
+  finally { acmeBusy = false; }
+}
+async function checkHttps() { tlsInfo.ok = !!tlsSrv && await probe("https://" + DOMAIN); tlsInfo.t = Date.now(); }
+setTimeout(async () => { await ensureCert(); checkHttps(); }, 15e3);
+setInterval(ensureCert, 12 * 3600e3); setInterval(checkHttps, 3 * 60e3);
+const httpsUp = () => tlsInfo.ok && Date.now() - tlsInfo.t < 10 * 60e3;
 
 /* ---------- Temps réel (Server-Sent Events, par table) ---------- */
 const clients = new Map(); // res -> { tid, sl }
@@ -454,9 +539,10 @@ const server = http.createServer(async (req, res) => {
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("Referrer-Policy", "no-referrer");
   res.setHeader("X-Frame-Options", "DENY");
-  const host = String(req.headers.host || ""), viaTunnel = /\.trycloudflare\.com$/i.test(host) || !!req.headers["cf-connecting-ip"];
-  if (viaTunnel) res.setHeader("Strict-Transport-Security", "max-age=86400");
-  if (req.method === "GET" && !viaTunnel && !isLocalHost(host) && !u.pathname.startsWith("/api/") && tunnelUrl() && !/\.(js|json|png|webmanifest|ico)$/i.test(u.pathname)) {
+  const host = String(req.headers.host || ""), secure = !!req.socket.encrypted, viaTunnel = /\.trycloudflare\.com$/i.test(host) || !!req.headers["cf-connecting-ip"];
+  if (u.pathname.startsWith("/.well-known/acme-challenge/")) { const k = acmeTokens.get(u.pathname.split("/").pop()); res.writeHead(k ? 200 : 404, { "Content-Type": "text/plain" }); return res.end(k || ""); }
+  if (viaTunnel || secure) res.setHeader("Strict-Transport-Security", "max-age=86400");
+  if (req.method === "GET" && !secure && !viaTunnel && !isLocalHost(host) && !u.pathname.startsWith("/api/") && tunnelUrl() && !/\.(js|json|png|webmanifest|ico)$/i.test(u.pathname)) {
     res.writeHead(302, { Location: tunnelUrl() + u.pathname + u.search, "Cache-Control": "no-store" }); return res.end();
   }
   try {
@@ -595,4 +681,8 @@ const server = http.createServer(async (req, res) => {
     fs.createReadStream(fp).pipe(res);
   } catch (e) { console.error(e); send(res, 500, { error: "Erreur serveur." }); }
 });
-server.listen(CFG.port, () => console.log("Table Daggerheart en ligne sur le port " + CFG.port + " : " + tableIds().length + " table(s)" + (mailOn() ? ", mails via " + MAIL.user : ", mails désactivés")));
+const front = net.createServer(sock => {
+  sock.once("data", buf => { sock.pause(); sock.unshift(buf); (buf[0] === 0x16 && tlsSrv ? tlsSrv : server).emit("connection", sock); process.nextTick(() => sock.resume()); });
+  sock.on("error", () => {});
+});
+front.listen(CFG.port, () => console.log("Table Daggerheart en ligne sur le port " + CFG.port + " : " + tableIds().length + " table(s)" + (mailOn() ? ", mails via " + MAIL.user : ", mails désactivés")));
