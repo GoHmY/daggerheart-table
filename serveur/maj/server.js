@@ -425,6 +425,7 @@ const server = http.createServer(async (req, res) => {
     if (u.pathname.startsWith("/api/site/")) return siteAdmin(req, res, u, ip);
     if (u.pathname.startsWith("/api/")) {
       const H = k => req.headers[k] || "";
+      if (u.pathname === "/api/local/status") { const r = String(req.socket.remoteAddress || "").replace(/^::ffff:/, ""); if ((r !== "127.0.0.1" && r !== "::1") || req.headers["cf-connecting-ip"]) return send(res, 404, { error: "Introuvable." }); return send(res, 200, { online: clients.size, uptime: Math.round(process.uptime()) }); }
       if (u.pathname === "/api/ping") { const tid = findTable(H("x-table")); return send(res, 200, { ok: true, needTable: true, open: tid ? tab(tid).open !== false : true, table: tid ? tab(tid).name : "", publicUrl: tunnelUrl(), mail: mailOn(), v: 4 }); }
       if (tooMany(ip)) return send(res, 429, { error: "Trop d’essais, réessayez dans 10 minutes." });
 
