@@ -684,7 +684,7 @@ async function buildSheetPdf(c){
  const tx=M+20,tmax=rx-72-tx;
  P.text(tx,y+30,c.name||"Sans nom",{size:22,font:"B",max:tmax});
  P.text(tx,y+46,cl.n+(sb.n?"  ·  "+sb.n:""),{size:11,font:"B",color:ACC,max:tmax});
- P.text(tx,y+60,(a1?a1.n:"")+(a2&&a2!==a1?" / "+a2.n:"")+(cm?"  ·  "+cm.n:""),{size:9,color:INK,max:tmax});
+ P.text(tx,y+60,"Héritage : "+(a1?a1.n:"")+(a2&&a2!==a1?" / "+a2.n:"")+(cm?"  ·  "+cm.n:""),{size:9,color:INK,max:tmax});
  let cx=tx;cl.dom.forEach(dm=>{const w=P.tw(dm.toUpperCase(),6.6,"B",.8)+14;P.rect(cx,y+67,w,12,{fill:DOMCOL[dm]||ACC,r:6});P.text(cx+7,y+75.6,dm,{size:6.6,font:"B",color:"#ffffff",cs:.8,upper:true});cx+=w+5});
  const who=[c.player&&("Joueur : "+c.player),c.pronouns,sb.sc&&("Incantation : "+sb.sc)].filter(Boolean).join("  ·  ");if(who)P.text(cx+6,y+76,who,{size:7.5,color:MUT,max:rx-72-cx-6});
  y+=ph+12;
@@ -707,7 +707,7 @@ async function buildSheetPdf(c){
   P.rect(x+tw6-11,y+5,6,6,{stroke:MUT,lw:.6,r:1,fill:c.traits[k].m?INK:null})});
  y+=th+12;
  /* Santé | Expériences, Or */
- const lw=CW*0.56,rw=CW-lw-12,rx2=M+lw+12;let ly=head(M,y,lw,"Santé");
+ const lw=CW*0.56,rw=CW-lw-12,rx2=M+lw+12;let ly=head(M,y,lw,"Dégâts et santé");
  const track=(nm,val,max,col)=>{P.text(M,ly+8,nm,{size:8.5,font:"B"});P.text(M+lw,ly+8,val+" / "+max,{size:8,color:MUT,align:"right"});
   const bw=(lw-11*3)/12;for(let i=0;i<12;i++){const x=M+i*(bw+3),act=i<max;P.rect(x,ly+13,bw,14,{r:2,stroke:act?INK:LINE,lw:act?.8:.5,fill:i<val?col:null,dash:!act})}ly+=36};
  track("Points de vie",c.hp||0,d.hp,"#c0392b");track("Stress",c.stress||0,d.st,"#7a3fb0");
@@ -725,6 +725,7 @@ async function buildSheetPdf(c){
  const row=(slot,name,t2,t3,feat)=>{P.rect(M,y,CW,26,{fill:SOFT,r:3});label(M+5,y+8,slot,{size:5.6});P.text(M+5,y+20,name,{size:9,font:"B",max:CW*.27-10,color:name==="-"?MUT:INK});P.text(M+.27*CW,y+16,t2,{size:8.3,max:CW*.2-6});P.text(M+.47*CW,y+16,t3,{size:9,font:"B",max:CW*.13-4});P.wrap(feat||"-",CW*.4-6,7).slice(0,2).forEach((l,j)=>P.text(M+.6*CW,y+11+j*8.3,l,{size:7}));y+=30};
  [["Principale",c.prim],["Secondaire",c.sec]].forEach(([slot,w])=>w?row(slot,w.n,w.t+" "+sign(d.tr[TK[w.t]]??0)+"  ·  "+w.r,d.prof+w.d+(w.dt==="mag"?" mag.":" phy."),w.f):row(slot,"-","","",""));
  const ar=c.armor||{};row("Armure",ar.n||"Sans armure",ar.preset==="none"?"Seuils : niveau / 2 x niveau":"Seuils de base "+(+ar.major||0)+" / "+(+ar.severe||0),"Score "+(+ar.score||0),ar.feat);y+=4;
+ const invw=(c.items||[]).filter(x=>x.cat==="Arme"&&x.w).slice(0,2);if(invw.length){label(M,y+6,"Armes en inventaire (2 au plus)");y+=10;invw.forEach(it=>{const w=it.w;row((SECO.some(s=>s.id===w.id)||(WCAT.find(s=>s.id===w.id)||{}).slot==="S")?"Secondaire":"Principale",w.n,w.t+"  ·  "+w.r,d.prof+w.d+(w.dt==="mag"?" mag.":" phy."),w.f)});y+=4}
  /* Capacités */
  const blocks=[];cl.feats.forEach(f=>blocks.push(["Classe",f[0],f[1],ACC]));subFeats(c).forEach(f=>blocks.push([sb.n+" · "+f[0],f[1],f[2],ACC2]));
  if(a1)blocks.push(["Ascendance · "+a1.n,a1.f[0][0],a1.f[0][1],"#4d4766"]);if(a2)blocks.push(["Ascendance · "+a2.n,a2.f[1][0],a2.f[1][1],"#4d4766"]);if(cm)blocks.push(["Communauté · "+cm.n,cm.f[0],cm.f[1],"#4d4766"]);
@@ -732,7 +733,7 @@ async function buildSheetPdf(c){
  blocks.forEach(([src,n,t,colr])=>{const lines=P.wrap(t,colW-14,7.5);const h=26+lines.length*9+6;let k=cy[0]<=cy[1]?0:1;if(cy[k]+h>bottom){k=1-k;if(cy[k]+h>bottom){P.add();cy=[M,M];k=0}}
   const x=M+k*(colW+12),yy=cy[k];P.rect(x,yy,3,h-6,{fill:colr});label(x+9,yy+7,src,{size:5.8,color:colr,max:colW-14});P.text(x+9,yy+17,n,{size:8.8,font:"B",max:colW-14});lines.forEach((l,j)=>P.text(x+9,yy+27+j*9,l,{size:7.5}));cy[k]=yy+h});
  /* Page 2 */
- P.add();y=M;const ensure=h=>{if(y+h>bottom){P.add();y=M}};
+ if(P.pages.length>1&&Math.max(...cy)<P.H*0.55){y=Math.max(...cy)+10}else{P.add();y=M}const ensure=h=>{if(y+h>bottom){P.add();y=M}};
  const section=(t,col=ACC)=>{ensure(44);y=head(M,y,CW,t,col)};
  const cardsBy=loc=>(c.cards||[]).filter(x=>(x.loc||"loadout")===loc);
  const drawCards=(list,title)=>{if(!list.length)return;section(title);let cyy=[y,y];list.forEach(cd=>{const lines=P.wrap(cd.text||"",colW-16,7.3);const h=34+lines.length*8.8+6;let k=cyy[0]<=cyy[1]?0:1;if(cyy[k]+h>bottom){k=1-k;if(cyy[k]+h>bottom){P.add();cyy=[M,M];k=0}}
@@ -750,7 +751,12 @@ async function buildSheetPdf(c){
  y+=4;const eff=(c.effects||[]).filter(e=>e.on);if(eff.length){section("Bonus et malus actifs","#4d4766");eff.forEach(e=>{ensure(14);const v=[((+e.val)?sign(+e.val):""),((+e.adv)?(e.adv>0?"Avantage":"Désavantage"):"")].filter(Boolean).join(" ");
   P.text(M,y+8,e.name,{size:8.5,font:"B",max:150});P.text(M+160,y+8,v||"-",{size:8.5,font:"B",color:(+e.val<0||+e.adv<0)?"#c0392b":"#2e7d4f"});P.text(M+230,y+8,(EFF_TGT[e.tgt]||e.tgt)+"  ·  "+(EFF_DUR[e.dur]||e.dur)+(e.dur==="uses"?" ("+(e.uses||1)+")":""),{size:7.8,color:MUT,max:CW-230});y+=14});y+=4}
  const advs=[];for(let l=2;l<=c.level;l++){const a=((c.adv||{})[l]||[]).filter(Boolean);if(a.length)advs.push("Niveau "+l+" : "+a.map(k=>ADVOPT[k]||k).join(", "))}
- if(advs.length){section("Progression","#4d4766");advs.forEach(t=>{ensure(12);P.text(M,y+8,t,{size:8,max:CW});y+=12});y+=4}
+ {section("Progression par rang","#4d4766");const OPTS=[["trait",3],["hp",2],["stress",2],["exp",1],["card",1],["evasion",1],["sub",1],["prof",1],["multi",1]],TR3=[[2,4],[5,7],[8,10]],cw3=(CW-16)/3;ensure(14+OPTS.length*13+26);
+  TR3.forEach(([a,b],ti)=>{const x=M+ti*(cw3+8);P.rect(x,y,cw3,14,{fill:SOFT,r:3});P.text(x+6,y+10,"Rang "+(ti+2)+"  ·  niveaux "+a+" à "+b,{size:7.6,font:"B"});
+   let yy=y+20;OPTS.forEach(([k,n])=>{if((k==="sub"||k==="multi")&&ti===0){yy+=13;return}let got=0;for(let l=a;l<=Math.min(b,c.level);l++)((c.adv||{})[l]||[]).forEach(v=>{if(v===k)got++});if(k==="prof"||k==="multi")got=Math.ceil(got/2);
+    for(let j=0;j<n;j++)P.rect(x+4+j*9,yy-6,7,7,{stroke:INK,lw:.6,r:1,fill:j<got?INK:null});P.text(x+4+n*9+3,yy,(ADVOPT[k]||k).replace(/ \(rang 3\+\)| \(2 choix\)| \(rang 3\+, 2 choix\)/g,""),{size:6.6,max:cw3-n*9-10});yy+=13})});
+  y+=20+OPTS.length*13;P.text(M,y+4,"Chaque niveau : deux améliorations, +1 aux seuils, une carte de domaine. Paliers 2, 5 et 8 : nouvelle Expérience à +2 et +1 Compétence ; traits marqués effacés aux niveaux 5 et 8.",{size:6.6,color:MUT,max:CW});y+=12;
+  advs.forEach(t=>{ensure(11);P.text(M,y+8,t,{size:7.4,color:MUT,max:CW});y+=11});y+=4}
  const bg=c.bg||{};section("Histoire",ACC);
  const qa=(q,a)=>{const lines=a?P.wrap(a,CW,8):[];ensure(16+Math.max(2,lines.length)*10);P.text(M,y+8,q,{size:8,font:"B",color:ACC,max:CW});y+=12;if(a)lines.forEach(l=>{P.text(M,y+8,l,{size:8});y+=10});else{P.line(M,y+10,M+CW,y+10,LINE,.5);P.line(M,y+22,M+CW,y+22,LINE,.5);y+=24}y+=6};
  qa("Apparence",bg.look);(cl.q||[]).forEach((q,i)=>qa(q,(bg.answers||{})[i]));qa("Connexions",bg.links);if(bg.notes)qa("Notes de campagne",bg.notes);
