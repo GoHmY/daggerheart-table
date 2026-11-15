@@ -282,6 +282,16 @@ async function tableAdmin(req, res, u, w, ip) {
 /* ---------- Admin du site ---------- */
 const sessions = new Map(); // jeton -> { exp, ip }
 const adminSet = () => !!(store["_site/admin"] && store["_site/admin"].h);
+/* Réinitialisation locale du mot de passe admin : créer le fichier data/RESET-ADMIN puis redémarrer (script RESET-ADMIN.ps1) */
+const RESET_FILE = path.join(DATA_DIR, "RESET-ADMIN"), CODE_FILE = path.join(DATA_DIR, "code-admin.txt");
+if (fs.existsSync(RESET_FILE)) {
+  const c = randCode(10); delete store["_site/admin"]; persist();
+  try { fs.writeFileSync(CODE_FILE, c); fs.unlinkSync(RESET_FILE); } catch (e) { console.error("Réinitialisation admin :", e.message); }
+  pushLog("_site/log", { t: Date.now(), ev: "Mot de passe admin réinitialisé depuis le serveur", who: "admin", ip: "local" });
+  console.log("Mot de passe admin réinitialisé. Code de mise en place : " + c);
+}
+const setupCode = () => { try { return fs.readFileSync(CODE_FILE, "utf8").trim(); } catch (e) { return CFG.mjCode; } };
+const adminMailCodes = { sent: [] };
 function adminOk(req) { const tk = String(req.headers["x-admin"] || ""); const s = tk && sessions.get(tk); if (!s || Date.now() > s.exp) { if (s) sessions.delete(tk); return false; } s.exp = Date.now() + 12 * 3600e3; return true; }
 function siteOverview() {
   const tables = tableIds().map(tid => {
@@ -295,20 +305,21 @@ function siteOverview() {
   logs.sort((a, b) => b.t - a.t);
   let size = 0; try { size = fs.statSync(DB_FILE).size; } catch (e) {}
   const bks = fs.readdirSync(BK_DIR).filter(f => f.startsWith("db-")).sort().reverse();
-  return { tables, log: logs.slice(0, 250), backups: bks, dbSize: size, mail: mailOn() ? MAIL.user : "", online: clients.size, uptime: Math.round(process.uptime()), node: process.version, sessions: sessions.size };
+  return { tables, log: logs.slice(0, 250), backups: bks, dbSize: size, mail: mailOn() ? MAIL.user : "", adminEmail: (store["_site/admin"] || {}).e || "", online: clients.size, uptime: Math.round(process.uptime()), node: process.version, sessions: sessions.size };
 }
 async function siteAdmin(req, res, u, ip) {
   const op = u.pathname.slice(10);
-  if (op === "status") return send(res, 200, { setup: adminSet() });
+  if (op === "status") return send(res, 200, { setup: adminSet(), recover: adminSet() && mailOn() && !!store["_site/admin"].e, codeFile: fs.existsSync(CODE_FILE) });
   if (req.method !== "POST" && op !== "overview" && op !== "export") return send(res, 405, { error: "Méthode non permise." });
   if (tooMany(ip)) return send(res, 429, { error: "Trop d’essais, réessayez dans 10 minutes." });
   if (op === "setup") {
     const b = (await body(req).catch(() => null)) || {};
     if (adminSet()) return send(res, 409, { error: "Le mot de passe admin est déjà défini." });
-    if (!same(String(b.setup || ""), CFG.mjCode)) { fail(ip, null, "Mise en place admin refusée (mauvais code)", "", ip); return send(res, 401, { error: "Code de mise en place incorrect. C’est le mjCode écrit dans config.json." }); }
+    if (!same(String(b.setup || "").trim(), setupCode())) { fail(ip, null, "Mise en place admin refusée (mauvais code)", "", ip); return send(res, 401, { error: fs.existsSync(CODE_FILE) ? "Code de mise en place incorrect. Il est dans C:\\TableDaggerheart\\data\\code-admin.txt." : "Code de mise en place incorrect. C’est le mjCode écrit dans config.json." }); }
     if (typeof b.pass !== "string" || b.pass.length < 10 || b.pass.length > 128) return send(res, 400, { error: "Mot de passe admin : 10 caractères minimum." });
     if (b.pass !== b.pass2) return send(res, 400, { error: "Les deux mots de passe ne correspondent pas." });
     const s = crypto.randomBytes(16).toString("hex"); store["_site/admin"] = { s, h: hashPin(b.pass, s), t: Date.now() }; persist(); slog("Mot de passe admin créé", "admin", ip);
+    try { fs.unlinkSync(CODE_FILE); } catch (e) {}
     const tk = crypto.randomBytes(32).toString("hex"); sessions.set(tk, { exp: Date.now() + 12 * 3600e3, ip }); return send(res, 200, { ok: true, token: tk });
   }
   if (op === "login") {
@@ -316,6 +327,27 @@ async function siteAdmin(req, res, u, ip) {
     if (!a || !a.h) return send(res, 409, { error: "Mot de passe admin pas encore créé." });
     if (typeof b.pass !== "string" || !same(hashPin(b.pass, a.s), a.h)) { fail(ip, null, "Connexion admin refusée", "admin", ip); return send(res, 401, { error: "Mot de passe incorrect." }); }
     const tk = crypto.randomBytes(32).toString("hex"); sessions.set(tk, { exp: Date.now() + 12 * 3600e3, ip }); slog("Connexion admin", "admin", ip); return send(res, 200, { ok: true, token: tk });
+  }
+  if (op === "forgot") {
+    const a = store["_site/admin"];
+    if (!a || !a.e || !mailOn()) return send(res, 409, { error: "Aucune adresse de récupération admin. Lancez RESET-ADMIN.ps1 sur le serveur." });
+    const m = adminMailCodes; m.sent = m.sent.filter(t => Date.now() - t < 3600e3);
+    if (m.sent.length && Date.now() - m.sent[m.sent.length - 1] < 60e3) return send(res, 429, { error: "Un code vient d’être envoyé. Attendez une minute." });
+    if (m.sent.length >= 5) return send(res, 429, { error: "Trop de codes demandés. Réessayez dans une heure." });
+    fail(ip);
+    const code = String(crypto.randomInt(0, 1e6)).padStart(6, "0"); m.s = crypto.randomBytes(16).toString("hex"); m.h = hashPin(code, m.s); m.exp = Date.now() + 15 * 60e3; m.tries = 0; m.sent.push(Date.now());
+    try { await sendMail(a.e, "Code admin : " + code, "Code pour changer le mot de passe de la page de contrôle de la Table Daggerheart :\n\n    " + code + "\n\nValable 15 minutes. Si vous n’avez rien demandé, ignorez ce message et vérifiez le journal du site."); }
+    catch (e) { m.sent.pop(); delete m.h; slog("Échec d’envoi du code admin : " + e.message, "admin", ip); return send(res, 502, { error: "L’envoi du mail a échoué : " + e.message }); }
+    slog("Code de récupération admin envoyé", "admin", ip); return send(res, 200, { ok: true, message: "Code envoyé à " + a.e.replace(/^(.{2})[^@]*/, "$1***") + "." });
+  }
+  if (op === "reset") {
+    const b = (await body(req).catch(() => null)) || {}, a = store["_site/admin"], m = adminMailCodes, code = String(b.code || "").replace(/\D/g, "");
+    if (!a || !m.h || Date.now() > m.exp) { fail(ip); return send(res, 401, { error: "Code expiré ou invalide. Demandez-en un nouveau." }); }
+    if (code.length !== 6 || !same(hashPin(code, m.s), m.h)) { m.tries++; if (m.tries >= 5) delete m.h; fail(ip, null, "Code admin incorrect", "admin", ip); return send(res, 401, { error: m.h ? "Code incorrect." : "Trop d’erreurs. Demandez un nouveau code." }); }
+    if (typeof b.pass !== "string" || b.pass.length < 10) return send(res, 400, { error: "Mot de passe admin : 10 caractères minimum." });
+    if (b.pass !== b.pass2) return send(res, 400, { error: "Les deux mots de passe ne correspondent pas." });
+    delete m.h; a.s = crypto.randomBytes(16).toString("hex"); a.h = hashPin(b.pass, a.s); sessions.clear(); persist(); slog("Mot de passe admin changé par code mail", "admin", ip);
+    const tk = crypto.randomBytes(32).toString("hex"); sessions.set(tk, { exp: Date.now() + 12 * 3600e3, ip }); return send(res, 200, { ok: true, token: tk });
   }
   if (!adminOk(req)) { fail(ip); return send(res, 401, { error: "Session admin expirée. Reconnectez-vous." }); }
   if (op === "logout") { sessions.delete(String(req.headers["x-admin"])); return send(res, 200, { ok: true }); }
@@ -335,6 +367,14 @@ async function siteAdmin(req, res, u, ip) {
       if (b.pass !== b.pass2) return send(res, 400, { error: "Les deux mots de passe ne correspondent pas." });
       a.s = crypto.randomBytes(16).toString("hex"); a.h = hashPin(b.pass, a.s); const keep = String(req.headers["x-admin"]); for (const k of sessions.keys()) if (k !== keep) sessions.delete(k);
       persist(); slog("Mot de passe admin modifié", "admin", ip); return send(res, 200, { ok: true });
+    }
+    case "adminemail": { const em = String(b.email || "").trim().toLowerCase(); if (em && !EMAIL.test(em)) return send(res, 400, { error: "Adresse mail invalide." }); const a = store["_site/admin"]; if (em) a.e = em; else delete a.e; persist(); slog(em ? "Adresse de récupération admin enregistrée" : "Adresse de récupération admin retirée", "admin", ip); return send(res, 200, { ok: true }); }
+    case "testmail": {
+      const to = String(b.to || "").trim().toLowerCase(); if (!EMAIL.test(to)) return send(res, 400, { error: "Adresse mail invalide." });
+      if (!mailOn()) return send(res, 409, { error: "Mails désactivés : mailUser et mailPass absents de config.json." });
+      try { await sendMail(to, "Test de la Table Daggerheart", "Ce message confirme que le serveur envoie bien les mails de récupération.\n\nEnvoyé le " + new Date().toLocaleString("fr-FR") + "."); }
+      catch (e) { slog("Test d’envoi échoué : " + e.message, "admin", ip); return send(res, 502, { error: "Échec : " + e.message + (/535|534|auth/i.test(e.message) ? " (mot de passe d’application Gmail refusé : il a peut-être été révoqué, relancez MAIL.ps1)" : "") }); }
+      slog("Test d’envoi réussi vers " + to, "admin", ip); return send(res, 200, { ok: true });
     }
     case "logoutall": { sessions.clear(); slog("Toutes les sessions admin fermées", "admin", ip); return send(res, 200, { ok: true }); }
     case "clearlog": { store["_site/log"] = []; slog("Journal du site vidé", "admin", ip); return send(res, 200, { ok: true }); }
@@ -434,9 +474,11 @@ const server = http.createServer(async (req, res) => {
         const b = (await body(req).catch(() => null)) || {}, tid = findTable(H("x-table"));
         if (!tid) { fail(ip, null, "Code de table incorrect", b.name, ip); return send(res, 401, { error: "Code de table incorrect." }); }
         if (!mailOn()) return send(res, 503, { error: "L’envoi de mails n’est pas configuré sur ce serveur." });
-        const sl = slug(b.name), r = rec(tid, sl), generic = { ok: true, message: "Si ce compte a une adresse mail, un code vient d’y être envoyé. Pensez à regarder les spams." };
+        const sl = slug(b.name), r = rec(tid, sl), generic = { ok: true, message: "Code envoyé à " + (r && r.e ? r.e.replace(/^(.{2})[^@]*/, "$1***") : "votre adresse") + ". Il arrive en moins d’une minute : regardez aussi dans les spams et l’onglet Promotions." };
         fail(ip);
-        if (!r || !r.e || r.locked) { log(tid, "Code mail demandé (aucun envoi)", b.name, ip); return send(res, 200, generic); }
+        if (!r) { log(tid, "Code mail demandé pour un compte inconnu", b.name, ip); return send(res, 404, { error: "Aucun compte à ce nom sur cette table. Vérifiez l’orthographe." }); }
+        if (r.locked) return send(res, 403, { error: "Ce compte est bloqué. Contactez le MJ." });
+        if (!r.e) { log(tid, "Code mail demandé mais aucune adresse enregistrée", r.n, ip); return send(res, 409, { error: "Ce compte n’a pas d’adresse mail enregistrée. Utilisez votre code de récupération (ci-dessous) ou demandez un code provisoire au MJ. Une fois connecté, ajoutez votre adresse dans « Mon compte »." }); }
         const mk = tid + "\0" + sl, m = mailCodes.get(mk) || { sent: [] }; m.sent = m.sent.filter(t => Date.now() - t < 3600e3);
         if (m.sent.length && Date.now() - m.sent[m.sent.length - 1] < 60e3) return send(res, 429, { error: "Un code vient d’être envoyé. Attendez une minute avant d’en redemander un." });
         if (m.sent.length >= 5) return send(res, 429, { error: "Trop de codes demandés. Réessayez dans une heure ou demandez au MJ." });

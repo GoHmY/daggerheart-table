@@ -93,10 +93,18 @@ function pills(){const p=$("#pills");if(!A.tk||!A.d){p.innerHTML="";return}const
  p.innerHTML=`<span class="pill live">En ligne <b>${d.online}</b></span><span class="pill">Tables <b>${d.tables.length}</b></span><span class="pill">Joueurs <b>${x.acc.length}</b></span><span class="pill">Fiches <b>${x.chars.length}</b></span><button class="btn sm" data-a="logout">Déconnexion</button>`}
 /* ---------- Écrans ---------- */
 function renderAuth(){const s=A.setup;
+ if(s&&A.forgot)return `<div class="auth"><section class="box"><h2>Mot de passe admin oublié</h2>
+ ${A.recover?(A.codeSent?`<p class="small muted">${esc(A.info||"Code envoyé.")} Entrez-le puis choisissez un nouveau mot de passe.</p>
+  <label class="f">Code reçu par mail<input id="rc" inputmode="numeric" autocomplete="one-time-code" maxlength="7"></label>
+  <div class="row" style="margin-top:10px"><label class="f">Nouveau mot de passe<input id="pw" type="password" autocomplete="new-password" placeholder="10 caractères minimum"></label><label class="f">Confirmer<input id="pw2" type="password" autocomplete="new-password"></label></div>
+  <div class="flex" style="margin-top:12px"><button class="btn pri" data-a="reset">Changer le mot de passe</button><button class="btn" data-a="fsend">Renvoyer un code</button></div>`
+  :`<p class="small muted">Un code à 6 chiffres va être envoyé à l’adresse de récupération admin.</p><button class="btn pri" data-a="fsend">Recevoir un code par mail</button>`)
+ :`<p>Aucune adresse de récupération n’est enregistrée. Sur le serveur, ouvrez PowerShell en administrateur et lancez :</p><p><code>irm https://github.com/GoHmY/daggerheart-table/raw/main/serveur/RESET-ADMIN.ps1 | iex</code></p><p class="small muted">Le script affiche un code de mise en place à usage unique. Revenez ensuite ici pour créer un nouveau mot de passe.</p>`}
+ ${A.err?`<p class="bad" style="margin-top:10px">${esc(A.err)}</p>`:""}<p class="small" style="margin-top:12px"><a href="#" data-a="back">Retour à la connexion</a></p></section></div>`;
  return `<div class="auth"><section class="box"><h2>${s?"Connexion admin":"Créer le mot de passe admin"}</h2>
- ${s?`<label class="f">Mot de passe admin<input id="pw" type="password" autocomplete="current-password" autofocus></label><button class="btn pri" data-a="login" style="margin-top:12px">Entrer</button>`
- :`<p class="small muted">Première ouverture. Pour prouver que vous êtes le propriétaire du serveur, entrez le <b>mjCode</b> écrit dans config.json, puis choisissez le mot de passe de cette page (10 caractères minimum, différent des codes MJ).</p>
- <label class="f">Code de mise en place (mjCode de config.json)<input id="setup" type="password" autocomplete="off"></label>
+ ${s?`<label class="f">Mot de passe admin<input id="pw" type="password" autocomplete="current-password" autofocus></label><button class="btn pri" data-a="login" style="margin-top:12px">Entrer</button><p class="small" style="margin-top:12px"><a href="#" data-a="forgot">Mot de passe oublié ?</a></p>`
+ :`<p class="small muted">${A.codeFile?"Mot de passe admin réinitialisé. Entrez le code affiché par RESET-ADMIN.ps1 (aussi dans C:\\TableDaggerheart\\data\\code-admin.txt), puis":"Première ouverture. Pour prouver que vous êtes le propriétaire du serveur, entrez le <b>mjCode</b> écrit dans config.json, puis"} choisissez le mot de passe de cette page (10 caractères minimum, différent des codes MJ).</p>
+ <label class="f">Code de mise en place<input id="setup" type="password" autocomplete="off"></label>
  <div class="row" style="margin-top:10px"><label class="f">Mot de passe admin<input id="pw" type="password" autocomplete="new-password"></label><label class="f">Confirmer<input id="pw2" type="password" autocomplete="new-password"></label></div>
  <button class="btn pri" data-a="setup" style="margin-top:12px">Créer et entrer</button>`}
  ${A.err?`<p class="bad" style="margin-top:10px">${esc(A.err)}</p>`:""}</section></div>`}
@@ -166,6 +174,13 @@ function vSysteme(){const d=A.d,up=d.uptime,h=Math.floor(up/3600),mn=Math.floor(
   <tr><td class="muted">Base de données</td><td>${(d.dbSize/1024).toFixed(0)} Ko</td></tr><tr><td class="muted">Connexions temps réel</td><td>${d.online}</td></tr>
   <tr><td class="muted">Sessions admin ouvertes</td><td>${d.sessions}</td></tr></tbody></table>
   <h3 style="margin-top:16px">Sauvegardes quotidiennes</h3><p class="small">${d.backups.length} fichier${d.backups.length>1?"s":""} dans data\\sauvegardes (30 jours gardés).</p><p class="small muted">${d.backups.slice(0,6).map(esc).join(", ")}</p></section>
+ <section class="box"><h2>Mails</h2>
+  <p class="small muted">Envoyez un mail de test pour vérifier que les codes de récupération partent bien.</p>
+  <div class="row"><label class="f">Adresse de test<input id="tm" type="email" value="${esc(d.adminEmail||"")}" placeholder="votre adresse"></label><button class="btn" data-a="testmail" ${d.mail?"":"disabled"}>Envoyer un test</button></div>
+  <h3 style="margin-top:16px">Récupération du mot de passe admin</h3>
+  <p class="small muted">Adresse qui recevra un code si vous oubliez le mot de passe de cette page. Sans adresse, il faudra lancer RESET-ADMIN.ps1 sur le serveur.</p>
+  <div class="row"><label class="f">Adresse de récupération admin<input id="ae" type="email" value="${esc(d.adminEmail||"")}" placeholder="aucune"></label><button class="btn pri" data-a="aemail">Enregistrer</button></div>
+  <h3 style="margin-top:16px">Joueurs sans adresse</h3>${(()=>{const x=all().acc.filter(a=>!a.email);return x.length?`<p class="small">${x.map(a=>esc(a.name)+" <span class='muted'>("+esc(a.tname)+")</span>").join(", ")}</p><p class="small muted">Ils ne peuvent pas recevoir de code. Ajoutez leur adresse dans l’onglet Joueurs (bouton Mail), ou demandez-leur de le faire dans « Mon compte ».</p>`:`<p class="small good">Tous les joueurs ont une adresse.</p>`})()}</section>
  <section class="box"><h2>Accès admin</h2><div class="row"><label class="f">Mot de passe actuel<input id="op" type="password" autocomplete="current-password"></label></div>
   <div class="row" style="margin-top:10px"><label class="f">Nouveau mot de passe<input id="np" type="password" autocomplete="new-password" placeholder="10 caractères minimum"></label><label class="f">Confirmer<input id="np2" type="password" autocomplete="new-password"></label></div>
   <button class="btn pri" data-a="pass" style="margin-top:10px">Changer le mot de passe admin</button>
@@ -173,12 +188,18 @@ function vSysteme(){const d=A.d,up=d.uptime,h=Math.floor(up/3600),mn=Math.floor(
 /* ---------- Actions ---------- */
 function arm(b,label){if(b.dataset.armed)return true;b.dataset.armed="1";const o=b.textContent;b.textContent=label||"Confirmer ?";setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent=o}},3500);return false}
 function dl(name,obj){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(obj,null,1)],{type:"application/json"}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
-document.addEventListener("click",async e=>{const b=e.target.closest("button");if(!b)return;
+document.addEventListener("click",async e=>{const b=e.target.closest("button,a[data-a]");if(!b)return;if(b.tagName==="A")e.preventDefault();
  if(b.dataset.tab){A.tab=b.dataset.tab;save();render();scrollTo({top:0});return}
  const a=b.dataset.a,t=b.dataset.t,n=b.dataset.n;if(!a)return;
  switch(a){
   case "login":try{const j=await call("POST","login",null,{pass:val("pw")});A.tk=j.token;save();await load()}catch(x){A.err=x.message;render()}return;
   case "setup":{if(val("pw")!==val("pw2")){A.err="Les deux mots de passe ne correspondent pas.";render();return}try{const j=await call("POST","setup",null,{setup:val("setup"),pass:val("pw"),pass2:val("pw2")});A.tk=j.token;A.setup=true;save();await load()}catch(x){A.err=x.message;render()}return}
+  case "forgot":A.forgot=true;A.codeSent=false;A.err="";render();return;
+  case "back":A.forgot=false;A.err="";render();return;
+  case "fsend":try{const j=await call("POST","forgot");A.codeSent=true;A.info=j.message}catch(x){A.err=x.message}render();return;
+  case "reset":{if(val("pw")!==val("pw2")){A.err="Les deux mots de passe ne correspondent pas.";render();return}try{const j=await call("POST","reset",null,{code:val("rc"),pass:val("pw"),pass2:val("pw2")});A.tk=j.token;A.forgot=false;save();toast("Mot de passe admin changé.");await load()}catch(x){A.err=x.message;render()}return}
+  case "aemail":act("adminemail",null,{email:val("ae")},"Adresse de récupération enregistrée.");return;
+  case "testmail":{b.disabled=true;b.textContent="Envoi…";try{await call("POST","testmail",null,{to:val("tm")});toast("Mail de test envoyé. Vérifiez la boîte (et les spams).")}catch(x){toast(x.message)}b.disabled=false;b.textContent="Envoyer un test";await load();return}
   case "logout":try{await call("POST","logout")}catch(x){}A.tk="";A.d=null;A.setup=true;save();render();return;
   case "tempok":A.temp=null;render();return;
   case "copy":try{await navigator.clipboard.writeText(b.dataset.v);toast("Code copié.")}catch(x){toast(b.dataset.v)}return;
@@ -205,7 +226,7 @@ document.addEventListener("change",e=>{const t=e.target;
  if(t.dataset.filter!==undefined&&t.tagName==="SELECT"){A.ft=t.value;render();return}
  if(t.id==="fails"){A.fails=t.checked;render();return}
  if(t.dataset.move!==undefined&&t.value){const[tid,from,id]=t.dataset.move.split("|"),[to,who]=t.value.split("|");act("movechar",{table:tid,from,id,to:who,totable:to},null,"Fiche transférée.")}});
-document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.tagName==="INPUT"&&!A.tk){const b=document.querySelector('[data-a="login"],[data-a="setup"]');if(b)b.click()}});
-(async()=>{try{const r=await fetch("api/site/status",{cache:"no-store"});const j=await r.json();A.setup=!!j.setup}catch(e){A.setup=true;A.err="Serveur injoignable."}
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.tagName==="INPUT"&&!A.tk){const b=document.querySelector('[data-a="login"],[data-a="setup"],[data-a="reset"]');if(b)b.click()}});
+(async()=>{try{const r=await fetch("api/site/status",{cache:"no-store"});const j=await r.json();A.setup=!!j.setup;A.recover=!!j.recover;A.codeFile=!!j.codeFile}catch(e){A.setup=true;A.err="Serveur injoignable."}
  if(A.tk)await load();render()})();
 </script></body></html>
