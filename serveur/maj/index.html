@@ -684,9 +684,11 @@ function derive(c){
  const st=Math.min(12,E_("stress")+6+advCount(c,"stress")+(c.anc1==="humain"?1:0)+(c.classe==="gardien"&&c.sub==="vengeance"?1:0));
  const wev=(c.prim?.ev||0)+(c.sec?.ev||0),warm=(c.prim?.arm||0)+(c.sec?.arm||0);
  const ev=cl.ev+(+c.armor.ev||0)+wev+advCount(c,"evasion")+(c.anc2==="simiah"?1:0)+(+c.extraEv||0)+E_("evasion");
- let major,severe;if(c.armor.preset==="none"){major=L_;severe=2*L_}else{major=(+c.armor.major||0)+L_;severe=(+c.armor.severe||0)+L_}
- const bonus=E_("thresholds")+(c.classe==="gardien"&&c.sub==="stalwart"?1:0)+(c.anc1==="galapa"?prof:0);major+=bonus;severe+=bonus;
- const armor=Math.max(0,Math.min(12,(+c.armor.score||0)+warm+E_("armor")));
+ const tierN=tier(L_),bareBones=c.armor.preset==="none"&&(c.cards||[]).some(x=>x.loc!=="vault"&&x.name==="Bare Bones");
+ let major,severe;if(bareBones){[major,severe]=[[9,19],[11,24],[13,31],[15,38]][tierN-1]}else if(c.armor.preset==="none"){major=L_;severe=2*L_}else{major=(+c.armor.major||0)+L_;severe=(+c.armor.severe||0)+L_}
+ const subUp=advCount(c,"sub"),stalwart=c.classe==="gardien"&&c.sub==="stalwart"?1+(subUp>=1?2:0)+(subUp>=2?3:0):0;
+ const bonus=E_("thresholds")+stalwart+(c.anc1==="galapa"?prof:0);major+=bonus;severe+=bonus;
+ const armor=Math.max(0,Math.min(12,(bareBones?3+(+effTraits(c).force||0):(+c.armor.score||0))+warm+E_("armor")));
  const cards=2+(L_-1)+advCount(c,"card")+(c.classe==="magicien"&&c.sub==="knowledge"?1:0);
  const exps=2+(L_>=2)+(L_>=5)+(L_>=8);
  return{hopeMax:Math.max(0,6-(+c.scars||0)),prof,hp,st,ev,major,severe,armor,cards,exps,tier:tier(L_),tr:effTraits(c)};
