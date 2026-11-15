@@ -690,6 +690,151 @@ function bars(c){const d=derive(c);if(!d)return"";const r=(lab,v,m,col)=>`<div c
  return r("PV",c.hp,d.hp,"var(--hp)")+r("Stress",c.stress,d.st,"var(--stress)")+r("Espoir",c.hope,6,"var(--hope)")}
 
 
+/* =================== FICHE PDF (générée dans le navigateur, sans dépendance) =================== */
+const PDFW={"Helvetica":[278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584,761,556,0,222,556,333,1000,556,556,333,1000,667,333,1000,0,611,0,0,222,222,333,333,350,556,1000,333,1000,500,333,944,0,500,667,278,333,556,556,556,556,260,556,333,737,370,556,584,333,737,333,400,584,333,333,333,556,537,278,333,333,365,556,834,834,834,611,667,667,667,667,667,667,1000,722,667,667,667,667,278,278,278,278,722,722,778,778,778,778,778,584,778,722,722,722,722,667,667,611,556,556,556,556,556,556,889,500,556,556,556,556,278,278,278,278,556,556,556,556,556,556,556,584,611,556,556,556,556,500,556,500],"Helvetica-Bold":[278,333,474,556,556,889,722,238,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,333,333,584,584,584,611,975,722,722,722,722,667,611,778,722,278,556,722,611,833,722,778,667,778,722,667,611,722,667,944,667,667,611,333,278,333,584,556,333,556,611,556,611,556,333,611,611,278,278,556,278,889,611,611,611,611,389,556,333,611,556,778,556,556,500,389,280,389,584,761,556,0,278,556,500,1000,556,556,333,1000,667,333,1000,0,611,0,0,278,278,500,500,350,556,1000,333,1000,556,333,944,0,500,667,278,333,556,556,556,556,280,556,333,737,370,556,584,333,737,333,400,584,333,333,333,611,556,278,333,333,365,556,834,834,834,611,722,722,722,722,722,722,1000,722,667,667,667,667,278,278,278,278,722,722,778,778,778,778,778,584,778,722,722,722,722,667,667,611,556,556,556,556,556,556,889,556,556,556,556,556,278,278,278,278,611,611,611,611,611,611,611,584,611,611,611,611,611,556,611,556],"Helvetica-Oblique":[278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584,761,556,0,222,556,333,1000,556,556,333,1000,667,333,1000,0,611,0,0,222,222,333,333,350,556,1000,333,1000,500,333,944,0,500,667,278,333,556,556,556,556,260,556,333,737,370,556,584,333,737,333,400,584,333,333,333,556,537,278,333,333,365,556,834,834,834,611,667,667,667,667,667,667,1000,722,667,667,667,667,278,278,278,278,722,722,778,778,778,778,778,584,778,722,722,722,722,667,667,611,556,556,556,556,556,556,889,500,556,556,556,556,278,278,278,278,556,556,556,556,556,556,556,584,611,556,556,556,556,500,556,500]};
+const CP1252={8364:128,8218:130,402:131,8222:132,8230:133,8224:134,8225:135,710:136,8240:137,352:138,8249:139,338:140,381:142,8216:145,8217:146,8220:147,8221:148,8226:149,8211:150,8212:151,732:152,8482:153,353:154,8250:155,339:156,382:158,376:159};
+const PDF_SUB={"−":"-","‐":"-","‑":"-","≤":"<=","≥":">=","→":"->","←":"<-"," ":" "," ":" "," ":" ","′":"'","★":"*","✓":"v"};
+function pdfCodes(s){const out=[];for(const ch of String(s??"").normalize("NFC")){const r=PDF_SUB[ch];if(r){for(const x of r)out.push(x.charCodeAt(0));continue}const u=ch.codePointAt(0);
+ if(u===10||u===9){out.push(32);continue}if(u>=32&&u<127)out.push(u);else if(u>=160&&u<256)out.push(u);else if(CP1252[u])out.push(CP1252[u]);else{const b=ch.normalize("NFD").charCodeAt(0);out.push(b>=32&&b<127?b:63)}}return out}
+const f2=n=>(+n).toFixed(2);
+class MiniPDF{
+ constructor(){this.W=595.28;this.H=841.89;this.pages=[];this.imgs=[];this.add()}
+ add(){this.ops=[];this.pages.push(this.ops);return this}
+ col(h,stroke){const n=parseInt(String(h).replace("#",""),16),r=((n>>16)&255)/255,g=((n>>8)&255)/255,b=(n&255)/255;return r.toFixed(3)+" "+g.toFixed(3)+" "+b.toFixed(3)+(stroke?" RG":" rg")}
+ Y(y){return f2(this.H-y)}
+ paint(o){return o.fill&&o.stroke?"B":o.fill?"f":"S"}
+ style(o,lw){const p=[];if(o.fill)p.push(this.col(o.fill));if(o.stroke)p.push(this.col(o.stroke,1),(o.lw||lw)+" w");if(o.dash)p.push("[2 2] 0 d");return p}
+ rect(x,y,w,h,o={}){const p=this.style(o,.6),r=Math.min(o.r||0,w/2,h/2),X=x,B=this.H-y-h,T=B+h,R=X+w;
+  if(r){const k=.5523*r;p.push(`${f2(X+r)} ${f2(B)} m ${f2(R-r)} ${f2(B)} l ${f2(R-r+k)} ${f2(B)} ${f2(R)} ${f2(B+r-k)} ${f2(R)} ${f2(B+r)} c ${f2(R)} ${f2(T-r)} l ${f2(R)} ${f2(T-r+k)} ${f2(R-r+k)} ${f2(T)} ${f2(R-r)} ${f2(T)} c ${f2(X+r)} ${f2(T)} l ${f2(X+r-k)} ${f2(T)} ${f2(X)} ${f2(T-r+k)} ${f2(X)} ${f2(T-r)} c ${f2(X)} ${f2(B+r)} l ${f2(X)} ${f2(B+r-k)} ${f2(X+r-k)} ${f2(B)} ${f2(X+r)} ${f2(B)} c h`)}
+  else p.push(`${f2(X)} ${f2(B)} ${f2(w)} ${f2(h)} re`);
+  p.push(this.paint(o));if(o.dash)p.push("[] 0 d");this.ops.push(p.join(" "))}
+ line(x1,y1,x2,y2,c="#999999",lw=.5){this.ops.push(`${this.col(c,1)} ${lw} w ${f2(x1)} ${this.Y(y1)} m ${f2(x2)} ${this.Y(y2)} l S`)}
+ circle(x,y,r,o={}){const k=.5523*r,C=this.H-y,p=this.style(o,.7);
+  p.push(`${f2(x+r)} ${f2(C)} m ${f2(x+r)} ${f2(C+k)} ${f2(x+k)} ${f2(C+r)} ${f2(x)} ${f2(C+r)} c ${f2(x-k)} ${f2(C+r)} ${f2(x-r)} ${f2(C+k)} ${f2(x-r)} ${f2(C)} c ${f2(x-r)} ${f2(C-k)} ${f2(x-k)} ${f2(C-r)} ${f2(x)} ${f2(C-r)} c ${f2(x+k)} ${f2(C-r)} ${f2(x+r)} ${f2(C-k)} ${f2(x+r)} ${f2(C)} c h`,this.paint(o));this.ops.push(p.join(" "))}
+ poly(pts,o={}){const p=this.style(o,.7);p.push(pts.map((q,i)=>f2(q[0])+" "+this.Y(q[1])+(i?" l":" m")).join(" ")+" h",this.paint(o));this.ops.push(p.join(" "))}
+ tw(s,size,font="R",cs=0){const t=PDFW[font==="B"?"Helvetica-Bold":"Helvetica"],cd=pdfCodes(s);let w=0;for(const k of cd)w+=t[k-32]||556;return w*size/1000+cs*cd.length}
+ text(x,y,s,o={}){const size=o.size||9,font=o.font||"R",cs=o.cs||0;let str=String(s??"");if(o.upper)str=str.toUpperCase();
+  if(o.max&&this.tw(str,size,font,cs)>o.max){while(str.length>1&&this.tw(str+"…",size,font,cs)>o.max)str=str.slice(0,-1);str=str.trimEnd()+"…"}
+  const w=this.tw(str,size,font,cs);const xx=o.align==="center"?x-w/2:o.align==="right"?x-w:x;
+  const lit=pdfCodes(str).map(k=>k===40||k===41||k===92?"\\"+String.fromCharCode(k):k>126?"\\"+k.toString(8).padStart(3,"0"):String.fromCharCode(k)).join("");
+  this.ops.push(`BT ${this.col(o.color||"#1d1a26")} /${({R:"F1",B:"F2",I:"F3"})[font]} ${size} Tf ${cs?cs+" Tc ":""}${f2(xx)} ${this.Y(y)} Td (${lit}) Tj${cs?" 0 Tc":""} ET`);return w}
+ wrap(s,w,size,font="R"){const out=[];String(s??"").split(/\n/).forEach(par=>{let line="";par.split(/\s+/).filter(Boolean).forEach(word=>{const t=line?line+" "+word:word;if(this.tw(t,size,font)<=w)line=t;else{if(line)out.push(line);line=word;while(this.tw(line,size,font)>w&&line.length>4){let k=line.length-1;while(k>1&&this.tw(line.slice(0,k),size,font)>w)k--;out.push(line.slice(0,k));line=line.slice(k)}}});if(line)out.push(line)});return out}
+ para(x,y,w,s,o={}){const size=o.size||8.5,lh=o.lh||size*1.3;const lines=this.wrap(s,w,size,o.font);lines.forEach((l,i)=>this.text(x,y+i*lh,l,{size,font:o.font,color:o.color}));return y+lines.length*lh}
+ image(bytes,pw,ph,x,y,w,h){const id=this.imgs.length;this.imgs.push({bytes,pw,ph});this.ops.push(`q ${f2(w)} 0 0 ${f2(h)} ${f2(x)} ${f2(this.H-y-h)} cm /Im${id} Do Q`)}
+ out(){const enc=new TextEncoder(),parts=[],offs=[];let len=0;const push=x=>{const b=typeof x==="string"?enc.encode(x):x;parts.push(b);len+=b.length};
+  const objs=[];const obj=body=>{objs.push(body);return objs.length};
+  const cat=obj(null),pagesId=obj(null);
+  const fonts=["Helvetica","Helvetica-Bold","Helvetica-Oblique"].map(f=>obj(`<< /Type /Font /Subtype /Type1 /BaseFont /${f} /Encoding /WinAnsiEncoding >>`));
+  const imgIds=this.imgs.map(im=>obj({img:im}));
+  const res=`<< /Font << /F1 ${fonts[0]} 0 R /F2 ${fonts[1]} 0 R /F3 ${fonts[2]} 0 R >> /XObject << ${imgIds.map((id,i)=>`/Im${i} ${id} 0 R`).join(" ")} >> >>`;
+  const kids=this.pages.map(ops=>{const s=ops.join("\n");const cid=obj(`<< /Length ${s.length} >>\nstream\n${s}\nendstream`);return obj(`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${this.W} ${this.H}] /Resources ${res} /Contents ${cid} 0 R >>`)});
+  objs[cat-1]=`<< /Type /Catalog /Pages ${pagesId} 0 R >>`;objs[pagesId-1]=`<< /Type /Pages /Kids [${kids.map(k=>k+" 0 R").join(" ")}] /Count ${kids.length} >>`;
+  push("%PDF-1.4\n%");push(new Uint8Array([226,227,207,211,10]));
+  objs.forEach((o,i)=>{offs[i]=len;push((i+1)+" 0 obj\n");if(o&&o.img){const im=o.img;push(`<< /Type /XObject /Subtype /Image /Width ${im.pw} /Height ${im.ph} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${im.bytes.length} >>\nstream\n`);push(im.bytes);push("\nendstream")}else push(o);push("\nendobj\n")});
+  const xref=len;push(`xref\n0 ${objs.length+1}\n0000000000 65535 f \n`+offs.map(o=>String(o).padStart(10,"0")+" 00000 n \n").join("")+`trailer\n<< /Size ${objs.length+1} /Root ${cat} 0 R /Info << /Producer (Table Daggerheart) >> >>\nstartxref\n${xref}\n%%EOF`);
+  const all=new Uint8Array(len);let p=0;parts.forEach(b=>{all.set(b,p);p+=b.length});return all}
+}
+async function photoJpeg(src,size=360){if(!src)return null;try{const img=new Image();img.src=src;await img.decode();const cv=document.createElement("canvas");cv.width=cv.height=size;const g=cv.getContext("2d");
+ const s=Math.min(img.naturalWidth,img.naturalHeight);g.fillStyle="#fff";g.fillRect(0,0,size,size);g.drawImage(img,(img.naturalWidth-s)/2,(img.naturalHeight-s)/2,s,s,0,0,size,size);
+ const b64=cv.toDataURL("image/jpeg",.86).split(",")[1],bin=atob(b64),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u}catch(e){return null}}
+async function buildSheetPdf(c){
+ const d=derive(c),cl=CLASSES[c.classe],sb=cl.subs[c.sub]||{n:"",f:[]},a1=ANC[c.anc1],a2=ANC[c.anc2||c.anc1],cm=COMM[c.comm];
+ const P=new MiniPDF(),M=30,CW=P.W-2*M,ACC=DOMCOL[cl.dom[0]]||"#7b4fc2",ACC2=DOMCOL[cl.dom[1]]||ACC,INK="#1d1a26",MUT="#6b6680",LINE="#cfc9da",SOFT="#f4f1f8";
+ const label=(x,y,s,o={})=>P.text(x,y,s,Object.assign({size:6.6,font:"B",color:MUT,cs:.9,upper:true},o));
+ const box=(x,y,w,h,o={})=>P.rect(x,y,w,h,Object.assign({stroke:LINE,lw:.7,r:5},o));
+ const head=(x,y,w,s,col=ACC)=>{P.rect(x,y,w,15,{fill:col,r:3});P.text(x+7,y+10.6,s,{size:7.4,font:"B",color:"#ffffff",cs:1.1,upper:true,max:w-14});return y+22};
+ const bottom=P.H-M-18;let y=M;
+ /* En-tête */
+ const photo=await photoJpeg(c.photo);const ph=86;
+ box(M,y,CW,ph,{fill:SOFT,stroke:SOFT});P.rect(M,y,6,ph,{fill:ACC});P.rect(M+6,y,3,ph,{fill:ACC2});
+ let rx=M+CW;if(photo){P.image(photo,360,360,rx-ph,y,ph,ph);rx-=ph+10}else rx-=10;
+ P.rect(rx-62,y+12,62,62,{fill:"#ffffff",stroke:ACC,lw:1.2,r:8});label(rx-31,y+26,"Niveau",{align:"center"});P.text(rx-31,y+56,c.level,{size:26,font:"B",align:"center",color:INK});P.text(rx-31,y+68,"Tier "+d.tier,{size:7,align:"center",color:MUT});
+ const tx=M+20,tmax=rx-72-tx;
+ P.text(tx,y+30,c.name||"Sans nom",{size:22,font:"B",max:tmax});
+ P.text(tx,y+46,cl.n+(sb.n?"  ·  "+sb.n:""),{size:11,font:"B",color:ACC,max:tmax});
+ P.text(tx,y+60,(a1?a1.n:"")+(a2&&a2!==a1?" / "+a2.n:"")+(cm?"  ·  "+cm.n:""),{size:9,color:INK,max:tmax});
+ let cx=tx;cl.dom.forEach(dm=>{const w=P.tw(dm.toUpperCase(),6.6,"B",.8)+14;P.rect(cx,y+67,w,12,{fill:DOMCOL[dm]||ACC,r:6});P.text(cx+7,y+75.6,dm,{size:6.6,font:"B",color:"#ffffff",cs:.8,upper:true});cx+=w+5});
+ const who=[c.player&&("Joueur : "+c.player),c.pronouns,sb.sc&&("Incantation : "+sb.sc)].filter(Boolean).join("  ·  ");if(who)P.text(cx+6,y+76,who,{size:7.5,color:MUT,max:rx-72-cx-6});
+ y+=ph+12;
+ /* Défense */
+ const gh=58,gw=[64,150,96];let gx=M;
+ box(gx,y,gw[0],gh);label(gx+gw[0]/2,y+13,"Évasion",{align:"center"});P.text(gx+gw[0]/2,y+44,d.ev,{size:26,font:"B",align:"center"});gx+=gw[0]+8;
+ box(gx,y,gw[1],gh);label(gx+9,y+13,"Armure");P.text(gx+gw[1]-9,y+13,"Score "+d.armor,{size:8.5,font:"B",align:"right"});
+ for(let i=0;i<d.armor&&i<12;i++){const sx=gx+9+(i%6)*22,sy=y+21+Math.floor(i/6)*17;P.rect(sx,sy,16,13,{stroke:INK,lw:.8,r:2,fill:i<(c.armorUsed||0)?INK:null})}
+ if(!d.armor)P.text(gx+9,y+36,"Aucune armure",{size:8,color:MUT});gx+=gw[1]+8;
+ box(gx,y,gw[2],gh);label(gx+gw[2]/2,y+13,"Maîtrise",{align:"center"});for(let i=0;i<6;i++)P.circle(gx+15+i*13.2,y+31,4.6,{stroke:INK,fill:i<d.prof?INK:null});P.text(gx+gw[2]/2,y+50,"Dés de dégâts x "+d.prof,{size:7,color:MUT,align:"center"});gx+=gw[2]+8;
+ const sw=M+CW-gx;box(gx,y,sw,gh);label(gx+9,y+13,"Seuils de dégâts");
+ const seg=(sw-18-2*30)/3,sy=y+21;[["Mineurs","1 PV"],["Majeurs","2 PV"],["Graves","3 PV"]].forEach(([n,p],i)=>{const x=gx+9+i*(seg+30);P.rect(x,sy,seg,30,{fill:SOFT,r:4});P.text(x+seg/2,sy+13,n,{size:7.8,font:"B",align:"center"});P.text(x+seg/2,sy+23,p,{size:6.8,color:MUT,align:"center"})});
+ [d.major,d.severe].forEach((v,i)=>{const x=gx+9+seg*(i+1)+30*i+15;P.circle(x,sy+15,14,{fill:"#ffffff",stroke:ACC,lw:1.4});P.text(x,sy+19.5,v,{size:12.5,font:"B",align:"center"})});
+ y+=gh+10;
+ /* Traits */
+ const tw6=(CW-5*6)/6,th=66;TRAITS.forEach(([k,n,verbs],i)=>{const x=M+i*(tw6+6),v=d.tr[k],base=+(c.traits[k].v??0);box(x,y,tw6,th,{fill:"#ffffff"});
+  label(x+tw6/2,y+12,n,{align:"center",color:INK});P.text(x+tw6/2,y+38,sign(v),{size:20,font:"B",align:"center",color:ACC});
+  if(v!==base)P.text(x+tw6/2,y+47,"base "+sign(base),{size:6.5,color:MUT,align:"center"});
+  P.wrap(verbs,tw6-8,6.3).slice(0,2).forEach((l,j)=>P.text(x+tw6/2,y+55+j*7.4,l,{size:6.3,color:MUT,align:"center"}));
+  P.rect(x+tw6-11,y+5,6,6,{stroke:MUT,lw:.6,r:1,fill:c.traits[k].m?INK:null})});
+ y+=th+12;
+ /* Santé | Expériences, Or */
+ const lw=CW*0.56,rw=CW-lw-12,rx2=M+lw+12;let ly=head(M,y,lw,"Santé");
+ const track=(nm,val,max,col)=>{P.text(M,ly+8,nm,{size:8.5,font:"B"});P.text(M+lw,ly+8,val+" / "+max,{size:8,color:MUT,align:"right"});
+  const bw=(lw-11*3)/12;for(let i=0;i<12;i++){const x=M+i*(bw+3),act=i<max;P.rect(x,ly+13,bw,14,{r:2,stroke:act?INK:LINE,lw:act?.8:.5,fill:i<val?col:null,dash:!act})}ly+=36};
+ track("Points de vie",c.hp||0,d.hp,"#c0392b");track("Stress",c.stress||0,d.st,"#7a3fb0");
+ P.text(M,ly+8,"Espoir",{size:8.5,font:"B"});P.text(M+lw,ly+8,(c.hope||0)+" / "+d.hopeMax+(c.scars?"  ·  "+c.scars+" cicatrice"+(c.scars>1?"s":""):""),{size:8,color:MUT,align:"right"});
+ for(let i=0;i<6;i++){const x=M+12+i*24,yy=ly+26,dm=9;const barred=i>=d.hopeMax;P.poly([[x,yy-dm],[x+dm,yy],[x,yy+dm],[x-dm,yy]],{stroke:barred?LINE:INK,lw:.9,fill:i<(c.hope||0)?"#d4a017":null});if(barred){P.line(x-6,yy-6,x+6,yy+6,MUT,.8);P.line(x+6,yy-6,x-6,yy+6,MUT,.8)}}
+ const hx=M+158,hw=lw-158;P.text(hx,ly+19,"Capacité d’Espoir : "+cl.hope[0],{size:7.8,font:"B",max:hw});const hl=P.wrap(cl.hope[1],hw,7,"R");hl.slice(0,4).forEach((l,j)=>P.text(hx,ly+28.5+j*8.3,l,{size:7}));
+ ly+=Math.max(42,24+Math.min(4,hl.length)*8.3+6);
+ let ry=head(rx2,y,rw,"Expériences");
+ const ex=c.exps||[],nex=Math.max(d.exps,ex.length);for(let i=0;i<nex;i++){const e=ex[i]||{name:"",v:""};P.line(rx2,ry+12,rx2+rw-34,ry+12,LINE,.6);P.text(rx2+2,ry+9,e.name||"",{size:8.5,max:rw-40});P.rect(rx2+rw-28,ry,28,14,{stroke:INK,lw:.7,r:3});P.text(rx2+rw-14,ry+10,e.name?sign(+e.v||0):"",{size:8.5,font:"B",align:"center"});ry+=18}
+ ry+=4;ry=head(rx2,ry,rw,"Or",ACC2);const g=c.gold||{};[["Poignées",+g.h||0,9],["Bourses",+g.b||0,9],["Coffre",+g.c||0,1]].forEach(([n,v,mx])=>{P.text(rx2,ry+8,n,{size:8,font:"B"});for(let k=0;k<mx;k++)P.circle(rx2+58+k*13,ry+5,4.4,{stroke:INK,fill:k<v?"#d4a017":null});if(v>mx)P.text(rx2+58+mx*13,ry+8,"x"+v,{size:7.5,color:MUT});ry+=15});
+ y=Math.max(ly,ry)+6;
+ /* Armes et armure */
+ y=head(M,y,CW,"Armes actives  ·  Maîtrise "+d.prof);
+ const colx=[0,.27,.47,.6];[["Arme",0],["Trait et portée",1],["Dégâts",2],["Propriété",3]].forEach(([n,i])=>label(M+colx[i]*CW+(i?0:5),y,n));y+=5;
+ const row=(slot,name,t2,t3,feat)=>{P.rect(M,y,CW,26,{fill:SOFT,r:3});label(M+5,y+8,slot,{size:5.6});P.text(M+5,y+20,name,{size:9,font:"B",max:CW*.27-10,color:name==="-"?MUT:INK});P.text(M+.27*CW,y+16,t2,{size:8.3,max:CW*.2-6});P.text(M+.47*CW,y+16,t3,{size:9,font:"B",max:CW*.13-4});P.wrap(feat||"-",CW*.4-6,7).slice(0,2).forEach((l,j)=>P.text(M+.6*CW,y+11+j*8.3,l,{size:7}));y+=30};
+ [["Principale",c.prim],["Secondaire",c.sec]].forEach(([slot,w])=>w?row(slot,w.n,w.t+" "+sign(d.tr[TK[w.t]]??0)+"  ·  "+w.r,d.prof+w.d+(w.dt==="mag"?" mag.":" phy."),w.f):row(slot,"-","","",""));
+ const ar=c.armor||{};row("Armure",ar.n||"Sans armure",ar.preset==="none"?"Seuils : niveau / 2 x niveau":"Seuils de base "+(+ar.major||0)+" / "+(+ar.severe||0),"Score "+(+ar.score||0),ar.feat);y+=4;
+ /* Capacités */
+ const blocks=[];cl.feats.forEach(f=>blocks.push(["Classe",f[0],f[1],ACC]));(sb.f||[]).forEach(f=>blocks.push(["Sous-classe · "+sb.n,f[0],f[1],ACC2]));
+ if(a1)blocks.push(["Ascendance · "+a1.n,a1.f[0][0],a1.f[0][1],"#4d4766"]);if(a2)blocks.push(["Ascendance · "+a2.n,a2.f[1][0],a2.f[1][1],"#4d4766"]);if(cm)blocks.push(["Communauté · "+cm.n,cm.f[0],cm.f[1],"#4d4766"]);
+ const colW=(CW-12)/2;if(y+60>bottom){P.add();y=M}y=head(M,y,CW,"Capacités");let cy=[y,y];
+ blocks.forEach(([src,n,t,colr])=>{const lines=P.wrap(t,colW-14,7.5);const h=26+lines.length*9+6;let k=cy[0]<=cy[1]?0:1;if(cy[k]+h>bottom){k=1-k;if(cy[k]+h>bottom){P.add();cy=[M,M];k=0}}
+  const x=M+k*(colW+12),yy=cy[k];P.rect(x,yy,3,h-6,{fill:colr});label(x+9,yy+7,src,{size:5.8,color:colr,max:colW-14});P.text(x+9,yy+17,n,{size:8.8,font:"B",max:colW-14});lines.forEach((l,j)=>P.text(x+9,yy+27+j*9,l,{size:7.5}));cy[k]=yy+h});
+ /* Page 2 */
+ P.add();y=M;const ensure=h=>{if(y+h>bottom){P.add();y=M}};
+ const section=(t,col=ACC)=>{ensure(44);y=head(M,y,CW,t,col)};
+ const cardsBy=loc=>(c.cards||[]).filter(x=>(x.loc||"loadout")===loc);
+ const drawCards=(list,title)=>{if(!list.length)return;section(title);let cyy=[y,y];list.forEach(cd=>{const lines=P.wrap(cd.text||"",colW-16,7.3);const h=34+lines.length*8.8+6;let k=cyy[0]<=cyy[1]?0:1;if(cyy[k]+h>bottom){k=1-k;if(cyy[k]+h>bottom){P.add();cyy=[M,M];k=0}}
+  const x=M+k*(colW+12),yy=cyy[k],dc=DOMCOL[cd.domain]||ACC;box(x,yy,colW,h-6,{fill:"#ffffff"});P.rect(x,yy,colW,4,{fill:dc,r:2});P.text(x+8,yy+17,cd.name,{size:9.5,font:"B",max:colW-70});
+  P.text(x+colW-8,yy+17,"Rappel "+(cd.recall??0),{size:7.2,color:MUT,align:"right"});label(x+8,yy+27,[cd.domain,cd.type,"niv. "+(cd.level||1)].filter(Boolean).join("  ·  "),{size:5.8,color:dc});
+  lines.forEach((l,j)=>P.text(x+8,yy+37+j*8.8,l,{size:7.3}));cyy[k]=yy+h});y=Math.max(...cyy)+4};
+ drawCards(cardsBy("loadout"),"Cartes de domaine  ·  En main ("+cardsBy("loadout").length+"/5)");drawCards(cardsBy("vault"),"Cartes de domaine  ·  Réserve");
+ if(!(c.cards||[]).length){section("Cartes de domaine");P.text(M,y+8,"Aucune carte.",{size:8,color:MUT});y+=16}
+ const items=c.items||[];section("Inventaire",ACC2);
+ items.forEach(it=>{const mods=(it.mods||[]).map(m=>((+m.val)?sign(+m.val)+" ":"")+((+m.adv)?(m.adv>0?"avantage ":"désavantage "):"")+(EFF_TGT[m.tgt]||m.tgt)).join(", ");
+  const txt=[it.note,mods&&("Effet : "+mods)].filter(Boolean).join("  ·  ");const lines=txt?P.wrap(txt,CW-160,7.2):[];const h=Math.max(22,8+lines.length*8.6+6);ensure(h);
+  P.rect(M,y+3,7,7,{stroke:INK,lw:.6,r:1,fill:it.equip?INK:null});P.text(M+12,y+10,((+it.qty||1)>1?it.qty+" x ":"")+it.name,{size:8.5,font:"B",max:140});label(M+12,y+18,(it.cat||"")+(it.equip?"  ·  équipé":""),{size:5.4});lines.forEach((l,j)=>P.text(M+160,y+10+j*8.6,l,{size:7.2}));y+=h;P.line(M,y-2,M+CW,y-2,LINE,.4)});
+ if(c.inv){ensure(30);label(M,y+8,"Divers");y=P.para(M,y+18,CW,c.inv,{size:8,lh:10})+6}
+ if(!items.length&&!c.inv){P.text(M,y+8,"Inventaire vide.",{size:8,color:MUT});y+=16}
+ y+=4;const eff=(c.effects||[]).filter(e=>e.on);if(eff.length){section("Bonus et malus actifs","#4d4766");eff.forEach(e=>{ensure(14);const v=[((+e.val)?sign(+e.val):""),((+e.adv)?(e.adv>0?"Avantage":"Désavantage"):"")].filter(Boolean).join(" ");
+  P.text(M,y+8,e.name,{size:8.5,font:"B",max:150});P.text(M+160,y+8,v||"-",{size:8.5,font:"B",color:(+e.val<0||+e.adv<0)?"#c0392b":"#2e7d4f"});P.text(M+230,y+8,(EFF_TGT[e.tgt]||e.tgt)+"  ·  "+(EFF_DUR[e.dur]||e.dur)+(e.dur==="uses"?" ("+(e.uses||1)+")":""),{size:7.8,color:MUT,max:CW-230});y+=14});y+=4}
+ const advs=[];for(let l=2;l<=c.level;l++){const a=((c.adv||{})[l]||[]).filter(Boolean);if(a.length)advs.push("Niveau "+l+" : "+a.map(k=>ADVOPT[k]||k).join(", "))}
+ if(advs.length){section("Progression","#4d4766");advs.forEach(t=>{ensure(12);P.text(M,y+8,t,{size:8,max:CW});y+=12});y+=4}
+ const bg=c.bg||{};section("Histoire",ACC);
+ const qa=(q,a)=>{const lines=a?P.wrap(a,CW,8):[];ensure(16+Math.max(2,lines.length)*10);P.text(M,y+8,q,{size:8,font:"B",color:ACC,max:CW});y+=12;if(a)lines.forEach(l=>{P.text(M,y+8,l,{size:8});y+=10});else{P.line(M,y+10,M+CW,y+10,LINE,.5);P.line(M,y+22,M+CW,y+22,LINE,.5);y+=24}y+=6};
+ qa("Apparence",bg.look);(cl.q||[]).forEach((q,i)=>qa(q,(bg.answers||{})[i]));qa("Connexions",bg.links);if(bg.notes)qa("Notes de campagne",bg.notes);
+ /* Pieds de page */
+ const dt=new Date().toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"});
+ P.pages.forEach((ops,i)=>{P.ops=ops;P.line(M,P.H-M-8,M+CW,P.H-M-8,LINE,.5);P.text(M,P.H-M+2,(c.name||"Personnage")+"  ·  "+cl.n+" niveau "+c.level,{size:7,color:MUT,max:CW*.3});
+  P.text(P.W/2,P.H-M+2,"Fiche à jour au "+dt+"  ·  Table Daggerheart",{size:6.5,color:MUT,align:"center"});P.text(M+CW,P.H-M+2,(i+1)+" / "+P.pages.length,{size:7,color:MUT,align:"right"})});
+ return P.out()}
+function saveBlob(name,blob){
+ if(window.Android&&Android.saveFile){const r=new FileReader();r.onload=()=>{try{Android.saveFile(name,String(r.result).split(",")[1],blob.type)}catch(e){toast("Téléchargement impossible.")}};r.readAsDataURL(blob);return}
+ const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.rel="noopener";document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000)}
+const fileSafe=s=>String(s||"personnage").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^\w\-]+/g,"_");
+async function downloadPdf(c){if(!c||!derive(c)){toast("Terminez d’abord la création du personnage.");return}
+ toast("Préparation de la fiche PDF…");try{const bytes=await buildSheetPdf(c);saveBlob(fileSafe(c.name)+"-fiche-daggerheart.pdf",new Blob([bytes],{type:"application/pdf"}));setTimeout(()=>toast("Fiche PDF téléchargée."),600)}
+ catch(e){console.error(e);toast("La fiche PDF n’a pas pu être créée.")}}
+
 /* =================== HISTOIRE ALÉATOIRE =================== */
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 const NAMES=["Ash","Brann","Cassia","Dorn","Elowen","Faelan","Garrik","Hesper","Isolde","Joren","Kael","Liora","Maren","Nyx","Orin","Perrin","Quill","Rhosyn","Sable","Tamsin","Ulric","Vesna","Wren","Xanthe","Yorick","Zephyr","Brisa","Corvin","Delphine","Ember","Grommash","Ilya","Lysandre","Morwen","Thorne","Selka"];
@@ -830,7 +975,7 @@ const STABS=[["fiche","Fiche"],["recap","Récap jets"],["jets","Jets & dégâts"
 function renderSheet(){const c=T();if(!c){L.view="home";return renderHome()}
  const d=derive(c);const ro=!canWrite(c);
  const tab={fiche:sFiche,recap:sRecap,jets:sJets,cartes:sCartes,equip:(c,d)=>equipEditor(c)+sInv(c,d),prog:sProg,histoire:sHist}[L.tab]||sFiche;
- return `<nav class="tabs"><button data-act="home">← Retour</button>${STABS.map(([k,n])=>`<button class="${L.tab===k?"on":""}" data-tab="${k}">${n}</button>`).join("")}</nav>
+ return `<nav class="tabs"><button data-act="home">← Retour</button>${STABS.map(([k,n])=>`<button class="${L.tab===k?"on":""}" data-tab="${k}">${n}</button>`).join("")}<button data-act="pdf" title="Télécharger la fiche complète en PDF, à jour">Fiche PDF</button></nav>
  ${ro?`<div class="note fear" style="margin-bottom:12px">Lecture seule : ce personnage appartient à un autre joueur.</div>`:""}
  <fieldset ${ro?"disabled":""}>${tab(c,d)}</fieldset>`}
 function sFiche(c,d){const cl=CLASSES[c.classe],sb=cl.subs[c.sub],a1=ANC[c.anc1].f[0],a2=ANC[c.anc2||c.anc1].f[1],cm=COMM[c.comm];
@@ -953,14 +1098,14 @@ function sHist(c){const cl=CLASSES[c.classe];return `<div class="grid"><div clas
  <section class="box"><h2>Questions de background</h2>${cl.q.map((q,i)=>area(q,"bg.answers."+i,c.bg.answers[i]||"",2)).join("")}</section></div>
  <div class="col"><section class="box"><h2>Liens et notes</h2>${area("Connexions","bg.links",c.bg.links,4)}${area("Notes de campagne","bg.notes",c.bg.notes,6)}</section>
  <section class="box"><h2>Sauvegarde</h2><p class="small muted">Téléchargez la fiche en fichier pour la garder sur votre téléphone, votre PC ou un Drive commun. Le fichier contient tout, portrait compris.</p>
- <div class="flexgap"><button class="btn sm pri" data-act="dlchar">Télécharger la fiche</button><button class="btn sm" data-act="copy">Copier le texte</button><button class="btn sm" data-act="dup">Dupliquer</button><button class="btn sm danger" data-act="del" id="delbtn">Supprimer ce personnage</button></div>
+ <div class="flexgap"><button class="btn sm pri" data-act="pdf">Fiche PDF à imprimer</button><button class="btn sm" data-act="dlchar">Sauvegarde (.json)</button><button class="btn sm" data-act="copy">Copier le texte</button><button class="btn sm" data-act="dup">Dupliquer</button><button class="btn sm danger" data-act="del" id="delbtn">Supprimer ce personnage</button></div>
  <textarea id="exptxt" rows="3" readonly style="margin-top:8px">${esc(JSON.stringify(c))}</textarea>
  ${importBlock()}</section></div></div>`}
 function importBlock(){return `<h3>Importer un personnage</h3><div class="flexgap"><label class="btn sm">Choisir un fichier .json<input type="file" accept=".json,application/json,text/plain" data-importfile hidden></label><span id="impres" class="small"></span></div>
  <textarea id="imptxt" rows="2" placeholder="Ou collez le texte d’une fiche" style="margin-top:8px"></textarea><button class="btn sm" data-act="import" style="margin-top:6px">Importer le texte</button>`}
 async function download(name,obj){let dl=null;try{dl=window.claude&&claude.use?await claude.use("downloads"):null}catch(e){}
  const data=JSON.stringify(obj,null,1);
- if(!dl){toast("Téléchargement indisponible ici : utilisez « Copier le texte » et collez-le dans une note.");return}
+ if(!dl){saveBlob(name,new Blob([data],{type:"application/json"}));toast("Fichier enregistré.");return}
  try{await dl.save({filename:name,data});toast("Fichier enregistré.")}catch(e){toast(e&&e.code==="declined"?"Téléchargement annulé.":"Le téléchargement n’a pas abouti.")}}
 function importData(txt){try{let x=JSON.parse(txt);if(x&&x.chars)x=x.chars;x=Array.isArray(x)?x:[x];let n=0;
  x.forEach(o=>{if(!o||!o.classe)return;const c=Object.assign(blank(),o,{id:uid(),owner:L.me.id,example:false,photo:typeof o.photo==="string"&&o.photo.startsWith("data:image/")?o.photo:""});L.chars.push(c);saveChar(c);n++});
@@ -978,7 +1123,7 @@ function gTable(){const t=L.table;const pf=L.mode==="db"?pendingFear():0;
  <section class="box"><h2>Comptes à rebours</h2>${(t.cds||[]).map((x,i)=>`<div class="cd"><div style="min-width:0"><input data-tp="cds.${i}.name" value="${esc(x.name)}" aria-label="Nom"><div class="flexgap" style="margin-top:6px"><div class="slots">${Array.from({length:x.max},(_,j)=>`<button class="slot ${j<x.v?"on":""}" style="--c:var(--hope)" data-cd="${i}" data-i="${j}" aria-label="Case ${j+1}"></button>`).join("")}</div></div></div>
   <div class="flexgap" style="flex-direction:column"><label class="small flexgap"><input type="checkbox" data-tp="cds.${i}.pub" ${x.pub?"checked":""} style="width:auto">Public</label><button class="btn sm danger" data-act="delcd" data-i="${i}">✕</button></div></div>`).join("")||`<p class="small muted">Aucun compte à rebours.</p>`}
  <div class="flexgap"><input id="cdname" placeholder="Ex. : Le rituel s’achève" style="flex:1 1 180px"><input id="cdmax" type="number" value="6" min="1" max="12" style="width:70px" aria-label="Taille"><button class="btn sm" data-act="addcd">Ajouter</button></div></section></div>
- <div class="col"><section class="box"><h2>Personnages joueurs</h2>${L.chars.length?L.chars.map(c=>{const d=derive(c);if(!d)return"";return `<div class="item"><div class="itemhead"><b style="font:700 1.15rem var(--f-display)">${esc(c.name||"Sans nom")}</b><div class="flexgap">${SRV.on&&c.owner&&c.owner!==L.me.id?`<span class="small muted">Joueur : ${esc(c.owner.slice(2))}</span><button class="btn sm" data-act="resetpin" data-k="${esc(c.owner.slice(2))}">Code provisoire</button>`:""}<button class="btn sm" data-open="${c.id}">Fiche</button></div></div>${(c.effects||[]).filter(e=>e.on).length?`<div class="flexgap">${c.effects.filter(e=>e.on).map(e=>`<span class="chip" style="color:${+e.val<0||+e.adv<0?"var(--hp)":"var(--ok)"}">${esc(e.name)} ${effLabel(e)}</span>`).join("")}</div>`:""}<span class="small muted">${CLASSES[c.classe].n} ${c.level} &middot; Évasion ${d.ev} &middot; Seuils ${d.major}/${d.severe} &middot; Armure ${c.armorUsed}/${d.armor}</span>${bars(c)}</div>`}).join(""):`<p class="small muted">Aucun personnage à la table.</p>`}</section></div></div>`}
+ <div class="col"><section class="box"><h2>Personnages joueurs</h2>${L.chars.length?L.chars.map(c=>{const d=derive(c);if(!d)return"";return `<div class="item"><div class="itemhead"><b style="font:700 1.15rem var(--f-display)">${esc(c.name||"Sans nom")}</b><div class="flexgap"><button class="btn sm" data-act="pdfof" data-k="${esc(c.id)}">PDF</button>${SRV.on&&c.owner&&c.owner!==L.me.id?`<span class="small muted">Joueur : ${esc(c.owner.slice(2))}</span><button class="btn sm" data-act="resetpin" data-k="${esc(c.owner.slice(2))}">Code provisoire</button>`:""}<button class="btn sm" data-open="${c.id}">Fiche</button></div></div>${(c.effects||[]).filter(e=>e.on).length?`<div class="flexgap">${c.effects.filter(e=>e.on).map(e=>`<span class="chip" style="color:${+e.val<0||+e.adv<0?"var(--hp)":"var(--ok)"}">${esc(e.name)} ${effLabel(e)}</span>`).join("")}</div>`:""}<span class="small muted">${CLASSES[c.classe].n} ${c.level} &middot; Évasion ${d.ev} &middot; Seuils ${d.major}/${d.severe} &middot; Armure ${c.armorUsed}/${d.armor}</span>${bars(c)}</div>`}).join(""):`<p class="small muted">Aucun personnage à la table.</p>`}</section></div></div>`}
 function gEnc(){const t=L.table,base=3*(+t.pcs||4)+2+(+t.adj||0);const spent=(t.adv||[]).reduce((s,a)=>s+(ADVTYPES[a.type]?.[1]||0),0);
  return `<div class="grid"><div class="col"><section class="box"><h2>Budget de rencontre</h2><p class="small muted">Points de bataille = 3 x nombre de PJ + 2, puis ajustements.</p>
  <div class="row r3"><label class="f">Nombre de PJ<input type="number" data-tp="pcs" data-num value="${t.pcs||4}" data-r="all"></label><label class="f">Ajustement<select data-tp="adj" data-num data-r="all">${[[0,"Aucun"],[-1,"−1 combat plus facile ou court"],[-2,"−2 deux Solos ou plus"],[1,"+1 adversaire de tier inférieur"],[2,"+2 combat plus dur, dégâts +1d4"]].map(([v,n])=>`<option value="${v}" ${+t.adj===v?"selected":""}>${n}</option>`).join("")}</select></label></div>
@@ -1174,6 +1319,8 @@ document.addEventListener("click",e=>{
   case "del":if(!delArm){delArm=true;b.textContent="Confirmer la suppression";setTimeout(()=>{delArm=false;if(b.isConnected)b.textContent="Supprimer ce personnage"},3000);return}
    delArm=false;{const id=c.id;L.chars=L.chars.filter(x=>x.id!==id);L.view="home";if(L.mode==="db")db.doc(charPath(c)).delete().catch(()=>toast("Suppression refusée."));}break;
   case "import":importData(document.getElementById("imptxt").value);return;
+  case "pdf":downloadPdf(c);return;
+  case "pdfof":downloadPdf(L.chars.find(x=>x.id===b.dataset.k));return;
   case "dlchar":download((c.name||"personnage").replace(/[^\w\-]+/g,"_")+"-daggerheart.json",c);return;
   case "dlall":{const mine=L.chars.filter(x=>L.mode==="local"||x.owner===L.me.id);if(!mine.length){toast("Aucune fiche à télécharger.");return}download("mes-fiches-daggerheart.json",{chars:mine});return}
   case "countfear":{const n=pendingFear();L.table.counted=L.table.counted||{};L.chars.forEach(c=>{const m=Math.max(0,...(c.rolls||[]).map(r=>r.ts||0));if(m)L.table.counted[c.id]=m});L.table.fear=Math.min(12,(L.table.fear||0)+n);saveTable();break}
