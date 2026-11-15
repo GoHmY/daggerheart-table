@@ -228,68 +228,68 @@ const TRAITS=[["agilite","Agilité","Sprinter, bondir, manœuvrer"],["force","Fo
 const TN=Object.fromEntries(TRAITS.map(t=>[t[0],t[1]]));
 const TK=Object.fromEntries(TRAITS.map(t=>[t[1],t[0]]));
 const ARRAY=[2,1,1,0,0,-1];
-const DOMCOL={Arcana:"#7b4fc2",Lame:"#b3302f",Os:"#8a8f99",Codex:"#2f5fb3",Grâce:"#c2408a",Minuit:"#8f84d6",Sage:"#2f7a45",Splendeur:"#c99a1e",Valeur:"#c46a1d"};
-const DOMDESC={Arcana:"Magie innée et instinctive",Lame:"Maîtrise des armes",Os:"Tactique et corps",Codex:"Magie étudiée, grimoires",Grâce:"Charisme et persuasion",Minuit:"Ombres et secrets",Sage:"Monde naturel",Splendeur:"Vie et guérison",Valeur:"Protection et défense"};
+const DOMCOL={Arcane:"#7b4fc2",Lame:"#b3302f",Os:"#8a8f99",Codex:"#2f5fb3",Grâce:"#c2408a",Minuit:"#8f84d6",Sagesse:"#2f7a45",Splendeur:"#c99a1e",Vaillance:"#c46a1d"};
+const DOMDESC={Arcane:"Magie innée et instinctive",Lame:"Compétence des armes",Os:"Tactique et corps",Codex:"Magie étudiée, grimoires",Grâce:"Charisme et persuasion",Minuit:"Ombres et secrets",Sagesse:"Monde naturel",Splendeur:"Vie et guérison",Vaillance:"Protection et défense"};
 const CARDS1={
- Arcana:[["Rune Ward","Sort",0,"Imprégnez un bibelot d’une rune. Son porteur peut dépenser 1 Espoir pour réduire des dégâts entrants de 1d8."],["Unleash Chaos","Sort",1,"En début de session, placez des jetons égaux à votre niveau. Jet d’Incantation contre une cible : dépensez des jetons pour lancer autant de d10 de dégâts magiques."],["Wall Walk","Sort",1,"Dépensez 1 Espoir : une créature touchée peut grimper sur les murs et plafonds."]],
- Lame:[["Get Back Up","Capacité",1,"Quand vous subissez des dégâts Graves, marquez 1 Stress pour réduire la gravité d’un cran."],["Not Good Enough","Capacité",1,"Sur vos jets de dégâts, relancez les 1 et les 2."],["Whirlwind","Capacité",0,"Sur une attaque réussie très proche, dépensez 1 Espoir : les autres cibles très proches subissent la moitié des dégâts."]],
- Os:[["Deft Maneuvers","Capacité",0,"1 fois par repos, marquez 1 Stress pour sprinter à portée lointaine sans jet. +1 à votre prochaine attaque."],["I See It Coming","Capacité",1,"Visé par une attaque à distance, marquez 1 Stress : lancez 1d4 et ajoutez-le à votre Évasion."],["Untouchable","Capacité",1,"Bonus d’Évasion égal à la moitié de votre Agilité."]],
+ Arcane:[["Rune Ward","Sort",0,"Imprégnez un bibelot d’une rune. Son porteur peut dépenser 1 Espoir pour réduire des dégâts entrants de 1d8."],["Déchaîner le chaos","Sort",1,"En début de session, placez des jetons égaux à votre niveau. Jet d’Incantation contre une cible : dépensez des jetons pour lancer autant de d10 de dégâts magiques."],["Wall Walk","Sort",1,"Dépensez 1 Espoir : une créature touchée peut grimper sur les murs et plafonds."]],
+ Lame:[["Get Back Up","Capacité",1,"Quand vous subissez des dégâts Graves, marquez 1 Stress pour réduire la gravité d’un cran."],["Pas assez bon","Capacité",1,"Sur vos jets de dégâts, relancez les 1 et les 2."],["Tourbillon","Capacité",0,"Sur une attaque réussie très proche, dépensez 1 Espoir : les autres cibles très proches subissent la moitié des dégâts."]],
+ Os:[["Deft Maneuvers","Capacité",0,"1 fois par repos, marquez 1 Stress pour sprinter à portée lointaine sans jet. +1 à votre prochaine attaque."],["Je l’avais vu venir","Capacité",1,"Visé par une attaque à distance, marquez 1 Stress : lancez 1d4 et ajoutez-le à votre Esquive."],["Intouchable","Capacité",1,"Bonus d’Esquive égal à la moitié de votre Agilité."]],
  Codex:[["Book of Ava","Grimoire",2,"Poussée de force, Armure de Tava, Pointe de glace."],["Book of Illiat","Grimoire",2,"Sommeil, Barrage arcanique, Télépathie."],["Book of Tyfar","Grimoire",2,"Flamme sauvage, Main magique, Brume mystérieuse."]],
- Grâce:[["Deft Deceiver","Capacité",0,"Dépensez 1 Espoir pour avoir l’avantage sur un jet pour tromper ou duper."],["Enrapture","Sort",0,"Jet d’Incantation sur une cible proche : elle est envoûtée et fixée sur vous. Marquez 1 Stress pour lui faire marquer 1 Stress."],["Inspirational Words","Capacité",1,"Au repos long, jetons égaux à votre Présence. Dépensez-en pour qu’un allié retire 1 Stress, 1 PV ou gagne 1 Espoir."]],
- Minuit:[["Pick and Pull","Capacité",0,"Avantage pour crocheter, désamorcer un piège ou voler à la tire."],["Rain of Blades","Sort",1,"Dépensez 1 Espoir : Incantation contre toutes les cibles très proches, d8+2 magiques x Maîtrise, +1d8 contre les Vulnérables."],["Uncanny Disguise","Sort",0,"Marquez 1 Stress pour prendre l’apparence d’un humanoïde que vous pouvez imaginer."]],
- Sage:[["Gifted Tracker","Capacité",0,"En pistant, dépensez de l’Espoir pour poser des questions au MJ. +1 Évasion contre les créatures pistées."],["Nature’s Tongue","Capacité",0,"Parlez aux plantes et aux animaux (jet d’Instinct)."],["Vicious Entangle","Sort",1,"Incantation à portée lointaine : 1d8+1 physiques et la cible est Entravée."]],
- Splendeur:[["Bolt Beacon","Sort",1,"Dépensez 1 Espoir : Incantation à portée lointaine, d8+2 magiques x Maîtrise, la cible devient Vulnérable."],["Mending Touch","Sort",1,"Dépensez 2 Espoir et touchez une créature : elle retire 1 PV ou 2 Stress."],["Reassurance","Capacité",0,"1 fois par repos, après le jet d’un allié, permettez-lui de relancer ses dés."]],
- Valeur:[["Bare Bones","Capacité",0,"Sans armure, votre score d’Armure vaut 3 + Force, avec des seuils dédiés."],["Forceful Push","Capacité",0,"Attaque au corps à corps qui repousse la cible à portée proche. Dépensez 1 Espoir pour la rendre Vulnérable."],["I Am Your Shield","Capacité",1,"Quand un allié très proche va subir des dégâts, marquez 1 Stress pour les prendre à sa place."]]
+ Grâce:[["Deft Deceiver","Capacité",0,"Dépensez 1 Espoir pour avoir l’avantage sur un jet pour tromper ou duper."],["Enrapture","Sort",0,"Jet d’Incantation sur une cible proche : elle est envoûtée et fixée sur vous. Marquez 1 Stress pour lui faire marquer 1 Stress."],["Paroles inspirantes","Capacité",1,"Au long repos, jetons égaux à votre Présence. Dépensez-en pour qu’un allié retire 1 Stress, 1 PV ou gagne 1 Espoir."]],
+ Minuit:[["Crocheter et subtiliser","Capacité",0,"Avantage pour crocheter, désamorcer un piège ou voler à la tire."],["Pluie de lames","Sort",1,"Dépensez 1 Espoir : Incantation contre toutes les cibles très proches, d8+2 magiques x Compétence, +1d8 contre les Vulnérables."],["Uncanny Disguise","Sort",0,"Marquez 1 Stress pour prendre l’apparence d’un humanoïde que vous pouvez imaginer."]],
+ Sagesse:[["Gifted Tracker","Capacité",0,"En pistant, dépensez de l’Espoir pour poser des questions au MJ. +1 Esquive contre les créatures pistées."],["Nature’s Tongue","Capacité",0,"Parlez aux plantes et aux animaux (jet d’Instinct)."],["Enchevêtrement vicieux","Sort",1,"Incantation à portée lointaine : 1d8+1 physiques et la cible est Bloquée."]],
+ Splendeur:[["Bolt Beacon","Sort",1,"Dépensez 1 Espoir : Incantation à portée lointaine, d8+2 magiques x Compétence, la cible devient Vulnérable."],["Mending Touch","Sort",1,"Dépensez 2 Espoir et touchez une créature : elle retire 1 PV ou 2 Stress."],["Reassurance","Capacité",0,"1 fois par repos, après le jet d’un allié, permettez-lui de relancer ses dés."]],
+ Vaillance:[["Bare Bones","Capacité",0,"Sans armure, votre score d’Armure vaut 3 + Force, avec des seuils dédiés."],["Forceful Push","Capacité",0,"Attaque au corps à corps qui repousse la cible à portée proche. Dépensez 1 Espoir pour la rendre Vulnérable."],["Je suis ton bouclier","Capacité",1,"Quand un allié très proche va subir des dégâts, marquez 1 Stress pour les prendre à sa place."]]
 };
 const CLASSES={
  barde:{n:"Barde",sym:"lyre",ev:10,hp:5,dom:["Codex","Grâce"],pitch:"Le cœur du groupe. Soutien, charme et magie érudite.",rec:{presence:2,finesse:1,savoir:1,agilite:0,instinct:0,force:-1},
   hope:["Faire une scène","Dépensez 3 Espoir : distrayez une cible proche, sa Difficulté baisse de 2."],
   feats:[["Ralliement","1 fois par session, chaque allié reçoit un Dé de ralliement (d6, d8 au niveau 5) à ajouter à un jet ou pour retirer du Stress."]],
   q:["Qui, dans votre communauté, vous a appris à jouer et pourquoi l’avez-vous quitté ?","Quelle chanson refusez-vous de chanter ?","Quelle rumeur avez-vous lancée qui s’est retournée contre vous ?"],
-  subs:{troubadour:{n:"Troubadour",sc:"Présence",f:[["Artiste doué","Trois chants, chacun 1 fois par repos long : apaisant (allié retire 1 Stress ou 1 PV), épique (cible proche Vulnérable), déchirant (allié gagne 1 Espoir)."]]},
-   wordsmith:{n:"Orateur",sc:"Présence",f:[["Discours galvanisant","1 fois par repos long : tous les alliés à portée lointaine retirent 2 Stress."],["Cœur de poète","Après un jet pour impressionner ou persuader, dépensez 1 Espoir pour +1d4."]]}}},
- druide:{n:"Druide",sym:"leaf",ev:10,hp:6,dom:["Sage","Arcana"],pitch:"Métamorphe et gardien du monde sauvage.",rec:{instinct:2,agilite:1,force:1,presence:0,finesse:0,savoir:-1},
+  subs:{troubadour:{n:"Troubadour",sc:"Présence",f:[["Artiste doué","Trois chants, chacun 1 fois par long repos : apaisant (allié retire 1 Stress ou 1 PV), épique (cible proche Vulnérable), déchirant (allié gagne 1 Espoir)."]]},
+   wordsmith:{n:"Orateur",sc:"Présence",f:[["Discours galvanisant","1 fois par long repos : tous les alliés à portée lointaine retirent 2 Stress."],["Cœur de poète","Après un jet pour impressionner ou persuader, dépensez 1 Espoir pour +1d4."]]}}},
+ druide:{n:"Druide",sym:"leaf",ev:10,hp:6,dom:["Sagesse","Arcane"],pitch:"Métamorphe et gardien du monde sauvage.",rec:{instinct:2,agilite:1,force:1,presence:0,finesse:0,savoir:-1},
   hope:["Évolution","Dépensez 3 Espoir : Forme bestiale sans Stress et +1 à un trait pendant la transformation."],
   feats:[["Forme bestiale","Marquez 1 Stress pour vous transformer en créature de votre tier ou inférieur."],["Toucher sauvage","Effets naturels inoffensifs à volonté."]],
   q:["Quel lieu sauvage avez-vous juré de protéger ?","Quel animal vous a sauvé la vie ?","Qu’avez-vous dû détruire pour préserver l’équilibre ?"],
-  subs:{elements:{n:"Gardien des éléments",sc:"Instinct",f:[["Incarnation élémentaire","Marquez 1 Stress pour canaliser un élément (feu, terre, eau, air) jusqu’au prochain repos court."]]},
-   renewal:{n:"Gardien du renouveau",sc:"Instinct",f:[["Clarté de la nature","1 fois par repos long, un espace de calme où les alliés retirent du Stress."],["Régénération","Touchez une créature et dépensez 3 Espoir : elle retire 1d4 PV."]]}}},
- gardien:{n:"Gardien",sym:"shield",ev:9,hp:7,dom:["Lame","Valeur"],pitch:"Le mur du groupe. Encaisse, protège, ne recule jamais.",rec:{force:2,instinct:1,agilite:1,presence:0,finesse:0,savoir:-1},
-  hope:["Tank de première ligne","Dépensez 3 Espoir pour libérer 2 cases d’armure."],
-  feats:[["Inarrêtable","1 fois par repos long, dé Inarrêtable (d4, d6 au niveau 5) : réduit la gravité des dégâts physiques et s’ajoute à vos dégâts."]],
+  subs:{elements:{n:"Gardien des éléments",sc:"Instinct",f:[["Incarnation élémentaire","Marquez 1 Stress pour canaliser un élément (feu, terre, eau, air) jusqu’au prochain court repos."]]},
+   renewal:{n:"Gardien du renouveau",sc:"Instinct",f:[["Clarté de la nature","1 fois par long repos, un espace de calme où les alliés retirent du Stress."],["Régénération","Touchez une créature et dépensez 3 Espoir : elle retire 1d4 PV."]]}}},
+ gardien:{n:"Gardien",sym:"shield",ev:9,hp:7,dom:["Lame","Vaillance"],pitch:"Le mur du groupe. Encaisse, protège, ne recule jamais.",rec:{force:2,instinct:1,agilite:1,presence:0,finesse:0,savoir:-1},
+  hope:["Tank en première ligne","Dépensez 3 Espoir pour libérer 2 cases d’armure."],
+  feats:[["Inarrêtable","1 fois par long repos, dé Inarrêtable (d4, d6 au niveau 5) : réduit la gravité des dégâts physiques et s’ajoute à vos dégâts."]],
   q:["Qui avez-vous échoué à protéger ?","Quel serment porte votre arme ?","Qui vous a appris à vous battre et que vous a-t-il coûté ?"],
-  subs:{stalwart:{n:"Inébranlable",sc:"",f:[["Inflexible","+1 à vos seuils de dégâts."],["Volonté de fer","Marquez 1 case d’armure de plus pour réduire la gravité d’un cran supplémentaire."]]},
+  subs:{stalwart:{n:"Robuste",sc:"",f:[["Inflexible","+1 à vos seuils de dégâts."],["Volonté de fer","Marquez 1 case d’armure de plus pour réduire la gravité d’un cran supplémentaire."]]},
    vengeance:{n:"Vengeance",sc:"",f:[["Serein","+1 case de Stress."],["Revanche","Quand un adversaire au corps à corps vous blesse, marquez 2 Stress : il marque 1 PV."]]}}},
- rodeur:{n:"Rôdeur",sym:"arrow",ev:12,hp:6,dom:["Os","Sage"],pitch:"Chasseur, pisteur, tireur. Il choisit sa proie.",rec:{agilite:2,instinct:1,finesse:1,force:0,presence:0,savoir:-1},
-  hope:["Les retenir","Dépensez 3 Espoir après une attaque réussie : appliquez le jet à deux adversaires de plus."],
+ rodeur:{n:"Rôdeur",sym:"arrow",ev:12,hp:6,dom:["Os","Sagesse"],pitch:"Chasseur, pisteur, tireur. Il choisit sa proie.",rec:{agilite:2,instinct:1,finesse:1,force:0,presence:0,savoir:-1},
+  hope:["N’avancez pas","Dépensez 3 Espoir après une attaque réussie : appliquez le jet à deux adversaires de plus."],
   feats:[["Focus du rôdeur","Dépensez 1 Espoir et attaquez : la cible devient votre Focus. Vous la localisez, vos dégâts lui font marquer 1 Stress, et vous pouvez relancer un échec contre elle."]],
   q:["Quelle créature avez-vous traquée sans jamais l’attraper ?","Quelle forêt connaissez-vous mieux que quiconque ?","Pourquoi avez-vous quitté la chasse en solitaire ?"],
   subs:{beastbound:{n:"Lié aux bêtes",sc:"Agilité",f:[["Compagnon","Un compagnon animal avec sa fiche, son Stress et ses Expériences."]]},
-   wayfinder:{n:"Éclaireur",sc:"Agilité",f:[["Prédateur impitoyable","Marquez 1 Stress pour +1 Maîtrise sur un jet de dégâts. Un coup Grave fait marquer 1 Stress."],["Voie à suivre","Vous trouvez toujours le chemin le plus court vers un lieu connu."]]}}},
- voleur:{n:"Voleur",sym:"dagger",ev:12,hp:6,dom:["Minuit","Grâce"],pitch:"Ombre, ruse et coups en traître.",rec:{finesse:2,agilite:1,presence:1,instinct:0,force:0,savoir:-1},
-  hope:["Esquive du voleur","Dépensez 3 Espoir : +2 Évasion jusqu’à ce qu’on vous touche."],
+   wayfinder:{n:"Explorateur",sc:"Agilité",f:[["Prédateur impitoyable","Marquez 1 Stress pour +1 Compétence sur un jet de dégâts. Un coup Grave fait marquer 1 Stress."],["Voie à suivre","Vous trouvez toujours le chemin le plus court vers un lieu connu."]]}}},
+ voleur:{n:"Roublard",sym:"dagger",ev:12,hp:6,dom:["Minuit","Grâce"],pitch:"Ombre, ruse et coups en traître.",rec:{finesse:2,agilite:1,presence:1,instinct:0,force:0,savoir:-1},
+  hope:["Esquive du roublard","Dépensez 3 Espoir : +2 Esquive jusqu’à ce qu’on vous touche."],
   feats:[["Voilé","Quand vous devriez être Caché, vous êtes Voilé : invisible même en bougeant, jusqu’à votre attaque."],["Attaque sournoise","Avec l’avantage ou un allié au contact de la cible : +1d6 de dégâts par tier."]],
   q:["Quel coup a mal tourné et qui en a payé le prix ?","À qui devez-vous de l’argent ?","Quel objet volé gardez-vous encore ?"],
-  subs:{nightwalker:{n:"Marcheur nocturne",sc:"Finesse",f:[["Pas de l’ombre","Marquez 1 Stress pour passer d’une ombre à une autre à portée lointaine. Vous arrivez Voilé."]]},
+  subs:{nightwalker:{n:"Marchenuit",sc:"Finesse",f:[["Pas de l’ombre","Marquez 1 Stress pour passer d’une ombre à une autre à portée lointaine. Vous arrivez Voilé."]]},
    syndicate:{n:"Syndicat",sc:"Finesse",f:[["Bien connecté","Dans chaque lieu important, vous connaissez quelqu’un."]]}}},
- seraphin:{n:"Séraphin",sym:"halo",ev:9,hp:7,dom:["Splendeur","Valeur"],pitch:"Guerrier divin. Soigne, protège et frappe au nom de sa foi.",rec:{force:2,presence:1,instinct:1,agilite:0,finesse:0,savoir:-1},
+ seraphin:{n:"Séraphin",sym:"halo",ev:9,hp:7,dom:["Splendeur","Vaillance"],pitch:"Guerrier divin. Soigne, protège et frappe au nom de sa foi.",rec:{force:2,presence:1,instinct:1,agilite:0,finesse:0,savoir:-1},
   hope:["Maintien en vie","Dépensez 3 Espoir : un allié proche retire 1 PV."],
   feats:[["Dés de prière","En début de session, lancez autant de d4 que votre trait d’incantation. Dépensez-les pour réduire des dégâts, ajouter à un jet ou gagner de l’Espoir."]],
   q:["Quel dieu servez-vous et qu’exige-t-il ?","Quel signe divin avez-vous reçu ?","Quel doute vous empêche de dormir ?"],
-  subs:{divine:{n:"Porteur divin",sc:"Force",f:[["Arme spirituelle","Votre arme vole pour frapper à portée proche. Marquez 1 Stress pour toucher une seconde cible."],["Toucher épargnant","1 fois par repos long : retirez 2 PV ou 2 Stress à une créature."]]},
+  subs:{divine:{n:"Porteur divin",sc:"Force",f:[["Arme spirituelle","Votre arme vole pour frapper à portée proche. Marquez 1 Stress pour toucher une seconde cible."],["Toucher épargnant","1 fois par long repos : retirez 2 PV ou 2 Stress à une créature."]]},
    winged:{n:"Sentinelle ailée",sc:"Force",f:[["Ailes de lumière","Vous volez et pouvez porter un allié. Marquez 1 Stress et dépensez 1 Espoir pour +1d8 de dégâts en piqué."]]}}},
- sorcier:{n:"Sorcier",sym:"flame",ev:10,hp:6,dom:["Arcana","Minuit"],pitch:"Magie innée et instable, avec les outils du voleur.",rec:{instinct:2,agilite:1,finesse:1,presence:0,force:0,savoir:-1},
-  hope:["Magie instable","Dépensez 3 Espoir pour relancer autant de dés de dégâts magiques que voulu."],
-  feats:[["Sens arcanique","Vous sentez la magie et les objets magiques proches."],["Illusion mineure","Jet d’Incantation (10) : illusion simple."],["Canaliser la puissance brute","1 fois par repos long, mettez une carte en réserve : gagnez de l’Espoir égal à son niveau ou +2 x son niveau aux dégâts d’un sort."]],
+ sorcier:{n:"Ensorceleur",sym:"flame",ev:10,hp:6,dom:["Arcane","Minuit"],pitch:"Magie innée et instable, avec les outils du voleur.",rec:{instinct:2,agilite:1,finesse:1,presence:0,force:0,savoir:-1},
+  hope:["Magie volatile","Dépensez 3 Espoir pour relancer autant de dés de dégâts magiques que voulu."],
+  feats:[["Sens arcanique","Vous sentez la magie et les objets magiques proches."],["Illusion mineure","Jet d’Incantation (10) : illusion simple."],["Canaliser la puissance brute","1 fois par long repos, mettez une carte au caveau : gagnez de l’Espoir égal à son niveau ou +2 x son niveau aux dégâts d’un sort."]],
   q:["Quand votre pouvoir s’est-il éveillé et qui en a souffert ?","Qui veut vous utiliser pour votre magie ?","Que perdez-vous quand vous lancez un sort ?"],
   subs:{elemental:{n:"Origine élémentaire",sc:"Instinct",f:[["Élémentaliste","Choisissez un élément. En l’utilisant, dépensez 1 Espoir pour +2 au jet ou +3 aux dégâts."]]},
    primal:{n:"Origine primordiale",sc:"Instinct",f:[["Manipuler la magie","Après un sort, marquez 1 Stress : portée étendue, +2 au jet, dés doublés ou une cible de plus."]]}}},
  guerrier:{n:"Guerrier",sym:"swords",ev:11,hp:6,dom:["Lame","Os"],pitch:"Maître d’armes. Simple, solide, redoutable.",rec:{force:2,agilite:1,instinct:1,finesse:0,presence:0,savoir:-1},
-  hope:["Sans pitié","Dépensez 3 Espoir : +1 aux attaques jusqu’au prochain repos."],
+  hope:["Pas de pitié","Dépensez 3 Espoir : +1 aux attaques jusqu’au prochain repos."],
   feats:[["Attaque d’opportunité","Si un adversaire au contact fuit, jet de réaction : il reste, subit vos dégâts ou vous le suivez."],["Entraînement au combat","Vous ignorez le poids des armes et ajoutez votre niveau aux dégâts physiques."]],
   q:["Pour qui avez-vous combattu autrefois ?","Quelle cicatrice ne montrez-vous jamais ?","Quel adversaire vous a épargné ?"],
-  subs:{brave:{n:"Appel du brave",sc:"",f:[["Courage","Quand vous échouez avec Peur, gagnez 1 Espoir."],["Rituel de combat","1 fois par repos long, avant un danger : retirez 2 Stress, gagnez 2 Espoir."]]},
-   slayer:{n:"Appel du tueur",sc:"",f:[["Tueur","Succès avec Espoir : placez un d6 de Tueur au lieu de gagner 1 Espoir (max = Maîtrise). Dépensez-les sur attaques ou dégâts."]]}}},
+  subs:{brave:{n:"De l’appel des braves",sc:"",f:[["Courage","Quand vous échouez avec Peur, gagnez 1 Espoir."],["Rituel de combat","1 fois par long repos, avant un danger : retirez 2 Stress, gagnez 2 Espoir."]]},
+   slayer:{n:"Appel du tueur",sc:"",f:[["Tueur","Succès avec Espoir : placez un d6 de Tueur au lieu de gagner 1 Espoir (max = Compétence). Dépensez-les sur attaques ou dégâts."]]}}},
  magicien:{n:"Magicien",sym:"book",ev:11,hp:5,dom:["Codex","Splendeur"],pitch:"Érudit de la magie. Polyvalent, préparé, puissant.",rec:{savoir:2,instinct:1,agilite:1,presence:0,finesse:0,force:-1},
   hope:["Pas cette fois","Dépensez 3 Espoir : un adversaire à portée lointaine relance une attaque ou des dégâts."],
   feats:[["Prestidigitation","Effets magiques mineurs à volonté."],["Motifs étranges","Choisissez un nombre de 1 à 12. Quand il sort sur un Dé de dualité, gagnez 1 Espoir ou retirez 1 Stress."]],
@@ -298,15 +298,15 @@ const CLASSES={
    war:{n:"École de la guerre",sc:"Savoir",f:[["Mage de bataille","+1 case de PV."],["Affronter sa peur","Succès avec Peur : +1d10 de dégâts magiques."]]}}}
 };
 const ANC={
- clank:{n:"Clank",sym:"gear",d:"Constructs conscients, mécaniques et réparables.",f:[["Conception utile","+1 permanent à une Expérience (à reporter dans vos Expériences)."],["Efficace","En repos court, une action de repos long à la place."]]},
- drakona:{n:"Drakona",sym:"flame",d:"Descendants des dragons, écailles et souffle élémentaire.",f:[["Écailles","Dégâts Graves : marquez 1 Stress pour marquer 1 PV de moins."],["Souffle élémentaire","Jet d’Instinct, cible très proche : d8 magiques x Maîtrise."]]},
+ clank:{n:"Clank",sym:"gear",d:"Constructs conscients, mécaniques et réparables.",f:[["Conception utile","+1 permanent à une Expérience (à reporter dans vos Expériences)."],["Efficace","En court repos, une action de long repos à la place."]]},
+ drakona:{n:"Drakona",sym:"flame",d:"Descendants des dragons, écailles et souffle élémentaire.",f:[["Écailles","Dégâts Graves : marquez 1 Stress pour marquer 1 PV de moins."],["Souffle élémentaire","Jet d’Instinct, cible très proche : d8 magiques x Compétence."]]},
  nain:{n:"Nain",sym:"crown",d:"Trapus, endurants, artisans de la pierre et du métal.",f:[["Peau épaisse","Dégâts Mineurs : marquez 2 Stress au lieu de 1 PV."],["Robustesse accrue","Dépensez 3 Espoir pour diviser par deux des dégâts physiques."]]},
  elfe:{n:"Elfe",sym:"star",d:"Longévifs, gracieux, liés aux étoiles.",f:[["Réflexes vifs","Marquez 1 Stress : avantage sur un jet de réaction."],["Transe céleste","Au repos, une action de repos supplémentaire."]]},
- feerique:{n:"Féerique",sym:"wing",d:"Créatures ailées du royaume des fées.",f:[["Plieur de chance","1 fois par session, 3 Espoir : relancez les Dés de dualité (vous ou un allié proche)."],["Ailes","Vous volez. Après une attaque adverse, marquez 1 Stress : +2 Évasion contre elle."]]},
+ feerique:{n:"Féerique",sym:"wing",d:"Créatures ailées du royaume des fées.",f:[["Plieur de chance","1 fois par session, 3 Espoir : relancez les Dés de dualité (vous ou un allié proche)."],["Ailes","Vous volez. Après une attaque adverse, marquez 1 Stress : +2 Esquive contre elle."]]},
  faune:{n:"Faune",sym:"leaf",d:"Mi-chèvres, bondissants, proches des bois.",f:[["Bond caprin","Bond à portée proche, avantage pour franchir des gouffres."],["Ruade","Attaque au contact réussie : marquez 1 Stress pour +2d6 et repousser."]]},
  firbolg:{n:"Firbolg",sym:"tree",d:"Géants doux à tête bovine, gardiens des forêts.",f:[["Charge","Marquez 1 Stress : chargez au contact et infligez 1d12 physiques aux cibles."],["Inébranlable","Avant de marquer du Stress, lancez 1d6 : sur 6, rien."]]},
  fungril:{n:"Fungril",sym:"moon",d:"Peuple fongique en réseau mycélien.",f:[["Réseau fongril","Communiquez avec un autre fungril à toute distance."],["Connexion aux morts","Touchez un cadavre, marquez 1 Stress : extrayez un souvenir."]]},
- galapa:{n:"Galapa",sym:"shield",d:"Peuple tortue, patient et protégé par sa carapace.",f:[["Carapace","Ajoutez votre Maîtrise à vos seuils de dégâts."],["Rétraction","Marquez 1 Stress : résistance physique, mais désavantage et immobile."]]},
+ galapa:{n:"Galapa",sym:"shield",d:"Peuple tortue, patient et protégé par sa carapace.",f:[["Carapace","Ajoutez votre Compétence à vos seuils de dégâts."],["Rétraction","Marquez 1 Stress : résistance physique, mais désavantage et immobile."]]},
  geant:{n:"Géant",sym:"tree",d:"Immenses et puissants.",f:[["Endurance","+1 case de PV."],["Allonge","Votre corps à corps porte à très proche."]]},
  gobelin:{n:"Gobelin",sym:"eye",d:"Petits, vifs, sens aiguisés.",f:[["Pied sûr","Vous ignorez le désavantage sur les jets d’Agilité."],["Sens du danger","1 fois par repos, 1 Stress : un adversaire relance une attaque contre vous ou un allié très proche."]]},
  halfelin:{n:"Halfelin",sym:"star",d:"Petits, chanceux, porteurs d’espoir.",f:[["Porte-bonheur","Début de session : tout le groupe gagne 1 Espoir."],["Boussole intérieure","Vous savez toujours où est le nord : avantage pour vous orienter et ne pas vous perdre."]]},
@@ -314,26 +314,26 @@ const ANC={
  infernis:{n:"Infernis",sym:"horns",d:"Lignée infernale, cornes et regard troublant.",f:[["Intrépide","Résultat avec Peur : marquez 2 Stress pour le changer en Espoir."],["Visage terrifiant","Avantage pour intimider des créatures hostiles."]]},
  katari:{n:"Katari",sym:"eye",d:"Félins agiles et curieux.",f:[["Instinct félin","Jet d’Agilité : dépensez 2 Espoir pour relancer le Dé d’Espoir."],["Griffes rétractiles","Jet d’Agilité au contact : la cible devient temporairement Vulnérable."]]},
  orc:{n:"Orc",sym:"horns",d:"Robustes, défenses saillantes, fierté guerrière.",f:[["Robuste","À 1 PV restant, les attaques contre vous ont le désavantage."],["Défenses","Attaque au contact réussie : 1 Espoir pour +1d6 de dégâts."]]},
- ribbet:{n:"Ribbet",sym:"wave",d:"Amphibiens agiles à longue langue.",f:[["Amphibie","Vous respirez et nagez sous l’eau."],["Longue langue","Attrapez à portée proche. Arme : Finesse, d12 physiques, 1 Stress."]]},
- simiah:{n:"Simiah",sym:"tree",d:"Simiens grimpeurs et agiles.",f:[["Grimpeur né","Avantage pour grimper et garder l’équilibre."],["Agile","+1 permanent en Évasion."]]}
+ ribbet:{n:"Côa",sym:"wave",d:"Amphibiens agiles à longue langue.",f:[["Amphibie","Vous respirez et nagez sous l’eau."],["Longue langue","Attrapez à portée proche. Arme : Finesse, d12 physiques, 1 Stress."]]},
+ simiah:{n:"Simiah",sym:"tree",d:"Simiens grimpeurs et agiles.",f:[["Grimpeur né","Avantage pour grimper et garder l’équilibre."],["Agile","+1 permanent en Esquive."]]}
 };
 const COMM={
- hautne:{n:"Noble de naissance",sym:"crown",d:"Élevé dans le privilège.",f:["Privilège","Avantage pour frayer avec la noblesse, négocier les prix ou exploiter votre réputation."]},
- savoir:{n:"Né du savoir",sym:"book",d:"Issu d’une communauté d’érudits.",f:["Bien instruit","Avantage sur l’histoire, la culture ou la politique d’une personne ou d’un lieu important."]},
+ hautne:{n:"Originaire de la haute",sym:"crown",d:"Élevé dans le privilège.",f:["Privilège","Avantage pour frayer avec la noblesse, négocier les prix ou exploiter votre réputation."]},
+ savoir:{n:"Originaire du savoir",sym:"book",d:"Issu d’une communauté d’érudits.",f:["Bien instruit","Avantage sur l’histoire, la culture ou la politique d’une personne ou d’un lieu important."]},
  ordre:{n:"Né de l’ordre",sym:"shield",d:"Grandi sous la loi et la discipline.",f:["Dévoué","Notez 3 principes. 1 fois par repos, en agissant selon l’un d’eux, votre Dé d’Espoir devient un d20."]},
- crete:{n:"Né des cimes",sym:"tree",d:"Élevé dans les montagnes.",f:["Constant","Avantage pour franchir des falaises, naviguer en milieu hostile, survivre."]},
+ crete:{n:"Originaire des falaises",sym:"tree",d:"Élevé dans les montagnes.",f:["Constant","Avantage pour franchir des falaises, naviguer en milieu hostile, survivre."]},
  mer:{n:"Né de la mer",sym:"wave",d:"Issu des peuples marins.",f:["Connaître la marée","Résultat avec Peur : un jeton (max = niveau). Dépensez-en pour +1 chacun sur un jet d’action."]},
  ruse:{n:"Né de la ruse",sym:"dagger",d:"Monde criminel et escroqueries.",f:["Canaille","Avantage pour négocier avec des criminels, détecter les mensonges, trouver une planque."]},
- profond:{n:"Né des profondeurs",sym:"moon",d:"Grandi sous terre.",f:["Habitant de l’ombre","En faible lumière : avantage pour se cacher, enquêter, percevoir."]},
+ profond:{n:"Originaire des souterrains",sym:"moon",d:"Grandi sous terre.",f:["Habitant de l’ombre","En faible lumière : avantage pour se cacher, enquêter, percevoir."]},
  errance:{n:"Né de l’errance",sym:"arrow",d:"Peuples nomades.",f:["Paquetage nomade","1 fois par session, 1 Espoir : sortez un objet ordinaire utile (validé par le MJ)."]},
- sauvage:{n:"Né du sauvage",sym:"leaf",d:"Élevé dans la nature.",f:["Pas léger","Avantage pour vous déplacer sans être entendu."]}
+ sauvage:{n:"Originaire de la nature",sym:"leaf",d:"Élevé dans la nature.",f:["Pas léger","Avantage pour vous déplacer sans être entendu."]}
 };
 const ARMORS={
  none:{n:"Sans armure",major:0,severe:0,score:0,ev:0,trm:{},feat:"Seuils = niveau et 2 x niveau."},
- gambeson:{n:"Gambison",major:5,severe:11,score:3,ev:1,trm:{},feat:"Souple : +1 Évasion."},
+ gambeson:{n:"Gambison",major:5,severe:11,score:3,ev:1,trm:{},feat:"Souple : +1 Esquive."},
  cuir:{n:"Armure de cuir",major:6,severe:13,score:3,ev:0,trm:{},feat:""},
- mailles:{n:"Cotte de mailles",major:7,severe:15,score:4,ev:-1,trm:{},feat:"Lourde : −1 Évasion."},
- plaques:{n:"Armure de plaques",major:8,severe:17,score:4,ev:-2,trm:{agilite:-1},feat:"Très lourde : −2 Évasion, −1 Agilité."}
+ mailles:{n:"Cotte de mailles",major:7,severe:15,score:4,ev:-1,trm:{},feat:"Lourde : −1 Esquive."},
+ plaques:{n:"Armure de plaques",major:8,severe:17,score:4,ev:-2,trm:{agilite:-1},feat:"Très lourde : −2 Esquive, −1 Agilité."}
 };
 // [id, nom, trait, portée, dégâts, type, mains, propriété, ev, armure, mods traits]
 const W=(id,n,t,r,d,dt,h,f="",ev=0,arm=0,trm={})=>({id,n,t,r,d,dt,h,f,ev,arm,trm});
@@ -341,39 +341,39 @@ const PRIM=[
  W("epeelarge","Épée large","Agilité","Mêlée","d8","phy",1,"Fiable : +1 aux jets d’attaque."),
  W("epeelongue","Épée longue","Agilité","Mêlée","d10+3","phy",2),
  W("hache","Hache de bataille","Force","Mêlée","d10+3","phy",2),
- W("espadon","Épée à deux mains","Force","Mêlée","d10+3","phy",2,"Massive : −1 Évasion, +1 dé de dégâts, gardez les meilleurs.",-1),
+ W("espadon","Épée à deux mains","Force","Mêlée","d10+3","phy",2,"Massive : −1 Esquive, +1 dé de dégâts, gardez les meilleurs.",-1),
  W("masse","Masse","Force","Mêlée","d8+1","phy",1),
- W("marteau","Marteau de guerre","Force","Mêlée","d12+3","phy",2,"Lourd : −1 Évasion.",-1),
+ W("marteau","Marteau de guerre","Force","Mêlée","d12+3","phy",2,"Lourd : −1 Esquive.",-1),
  W("dague","Dague","Finesse","Mêlée","d8+1","phy",1),
  W("baton","Bâton","Instinct","Mêlée","d10+3","phy",2),
  W("coutelas","Coutelas","Présence","Mêlée","d8+1","phy",1),
  W("rapiere","Rapière","Présence","Mêlée","d8","phy",1,"Rapide : marquez 1 Stress pour viser une autre créature à portée."),
- W("hallebarde","Hallebarde","Force","Très proche","d10+2","phy",2,"Encombrante : −1 Finesse.",0,0,{finesse:-1}),
- W("lance","Lance","Finesse","Très proche","d10+2","phy",2,"Encombrante : −1 Finesse.",0,0,{finesse:-1}),
- W("arccourt","Arc court","Agilité","Lointaine","d6+3","phy",2),
- W("arbalete","Arbalète","Finesse","Lointaine","d6+1","phy",1),
- W("arclong","Arc long","Agilité","Très lointaine","d8+3","phy",2,"Encombrant : −1 Finesse.",0,0,{finesse:-1}),
+ W("hallebarde","Hallebarde","Force","Très courte","d10+2","phy",2,"Encombrante : −1 Finesse.",0,0,{finesse:-1}),
+ W("lance","Lance","Finesse","Très courte","d10+2","phy",2,"Encombrante : −1 Finesse.",0,0,{finesse:-1}),
+ W("arccourt","Arc court","Agilité","Longue","d6+3","phy",2),
+ W("arbalete","Arbalète","Finesse","Longue","d6+1","phy",1),
+ W("arclong","Arc long","Agilité","Très longue","d8+3","phy",2,"Encombrant : −1 Finesse.",0,0,{finesse:-1}),
  W("gantelets","Gantelets arcaniques","Force","Mêlée","d10+3","mag",2),
  W("hacheconsacree","Hache consacrée","Force","Mêlée","d8+1","mag",1),
- W("anneaux","Anneaux lumineux","Agilité","Très proche","d10+1","mag",2),
- W("runes","Runes de main","Instinct","Très proche","d10","mag",1),
- W("lamerevenante","Lame revenante","Finesse","Proche","d8","mag",1,"Revient dans votre main après un lancer."),
- W("batoncourt","Bâton court","Instinct","Proche","d8+1","mag",1),
- W("doublebaton","Double bâton","Instinct","Lointaine","d6+3","mag",2),
- W("sceptre","Sceptre","Présence","Lointaine","d6","mag",2,"Polyvalent : aussi Présence, Mêlée, d8."),
- W("baguette","Baguette","Savoir","Lointaine","d6+1","mag",1),
- W("grandbaton","Grand bâton","Savoir","Très lointaine","d6","mag",2,"Puissant : +1 dé de dégâts, gardez les meilleurs.")
+ W("anneaux","Anneaux lumineux","Agilité","Très courte","d10+1","mag",2),
+ W("runes","Runes de main","Instinct","Très courte","d10","mag",1),
+ W("lamerevenante","Lame revenante","Finesse","Courte","d8","mag",1,"Revient dans votre main après un lancer."),
+ W("batoncourt","Bâton court","Instinct","Courte","d8+1","mag",1),
+ W("doublebaton","Double bâton","Instinct","Longue","d6+3","mag",2),
+ W("sceptre","Sceptre","Présence","Longue","d6","mag",2,"Polyvalent : aussi Présence, Mêlée, d8."),
+ W("baguette","Baguette","Savoir","Longue","d6+1","mag",1),
+ W("grandbaton","Grand bâton","Savoir","Très longue","d6","mag",2,"Puissant : +1 dé de dégâts, gardez les meilleurs.")
 ];
 const SECO=[
  W("epeecourte","Épée courte","Agilité","Mêlée","d8","phy",1,"Appariée : +2 aux dégâts de l’arme principale au contact."),
  W("bouclierrond","Bouclier rond","Force","Mêlée","d4","phy",1,"Protecteur : +1 Armure.",0,1),
- W("pavois","Pavois","Force","Mêlée","d6","phy",1,"Barrière : +2 Armure, −1 Évasion.",-1,2),
+ W("pavois","Pavois","Force","Mêlée","d6","phy",1,"Barrière : +2 Armure, −1 Esquive.",-1,2),
  W("petitedague","Petite dague","Finesse","Mêlée","d8","phy",1,"Appariée : +2 aux dégâts de l’arme principale au contact."),
- W("fouet","Fouet","Présence","Très proche","d6","phy",1),
- W("grappin","Grappin","Finesse","Proche","d6","phy",1,"Crochet : sur un coup, attirez la cible au contact."),
- W("arbaletepoing","Arbalète de poing","Finesse","Lointaine","d6+1","phy",1)
+ W("fouet","Fouet","Présence","Très courte","d6","phy",1),
+ W("grappin","Grappin","Finesse","Courte","d6","phy",1,"Crochet : sur un coup, attirez la cible au contact."),
+ W("arbaletepoing","Arbalète de poing","Finesse","Longue","d6+1","phy",1)
 ];
-const ADVOPT={"":"Choisir…",trait:"+1 à deux traits non marqués",hp:"+1 case de PV",stress:"+1 case de Stress",exp:"+1 à deux Expériences",card:"Carte de domaine supplémentaire",evasion:"+1 Évasion",sub:"Carte de sous-classe (tier 3+)",prof:"+1 Maîtrise (2 choix)",multi:"Multiclasse (tier 3+, 2 choix)"};
+const ADVOPT={"":"Choisir…",trait:"+1 à deux traits non marqués",hp:"+1 case de PV",stress:"+1 case de Stress",exp:"+1 à deux Expériences",card:"Carte de domaine supplémentaire",evasion:"+1 Esquive",sub:"Carte de sous-classe (rang 3+)",prof:"+1 Compétence (2 choix)",multi:"Multiclasse (rang 3+, 2 choix)"};
 const EXPEX=["Ancien bourreau","Gamin des rues","Bibliothécaire","Marin","Forgeron","Chasseur de primes","Je sais quand on me ment","Mémoire photographique","Pistage","Négociateur","Personne ne reste en arrière","Noble déchu"];
 const ADVTYPES={minion:["Sbires (groupe = nb de PJ)",1],social:["Social",1],support:["Soutien",1],horde:["Horde",2],ranged:["Tireur",2],skulk:["Rôdeur",2],standard:["Standard",2],leader:["Meneur",3],bruiser:["Brute",4],solo:["Solo",5]};
 const TIERBASE={1:{diff:11,maj:7,sev:12,hp:5,st:3,atk:1,dmg:"1d8+2"},2:{diff:14,maj:10,sev:20,hp:6,st:4,atk:2,dmg:"2d8+3"},3:{diff:17,maj:20,sev:32,hp:7,st:4,atk:3,dmg:"3d8+4"},4:{diff:20,maj:25,sev:45,hp:8,st:5,atk:4,dmg:"4d8+8"}};
@@ -421,7 +421,7 @@ let db=null,usr=null,needRender=false;
 function blank(){return{id:uid(),owner:L.me.id,example:false,name:"",player:"",pronouns:"",classe:"",sub:"",anc1:"",anc2:"",mixed:false,comm:"",level:1,
  traits:Object.fromEntries(TRAITS.map(t=>[t[0],{v:null,m:false}])),hp:0,stress:0,hope:2,armorUsed:0,extraEv:0,
  armor:{...ARMORS.cuir,preset:"cuir"},prim:null,sec:null,exps:[{name:"",v:2},{name:"",v:2}],cards:[],adv:{},gold:{h:1,b:0,c:0},
- inv:"Torche, 15 m de corde, rations, potion de soin mineure ou potion d’endurance mineure",bg:{look:"",answers:{},links:"",notes:"",principles:""},
+ inv:"Torche, 15 m de corde, rations, potion de santé mineure ou potion d’endurance mineure",bg:{look:"",answers:{},links:"",notes:"",principles:""},
  photo:"",psym:"",pcol:"",rolls:[],effects:[],items:KIT(),updatedAt:Date.now()}}
 function examples(){
  const a=blank();Object.assign(a,{example:true,name:"Ash",classe:"sorcier",sub:"elemental",anc1:"infernis",anc2:"infernis",comm:"ruse",
@@ -438,8 +438,12 @@ function examples(){
   bg:{look:"Grand, défenses brisées, tabard décousu.",answers:{},links:"Le Clank Séraphin lui a sauvé la vie le jour de sa désertion.",notes:"",principles:"La lame sert la justice, jamais l’ordre.\nOn ne laisse personne derrière.\nUne dette se paie en sang ou en loyauté."}});
  return[a,g];
 }
+/* Termes officiels de la VF : conversion des fiches enregistrées avec les anciens noms */
+const VF_DOM={Arcana:"Arcane",Valeur:"Vaillance",Sage:"Sagesse"},VF_CARD={"Rain of Blades":"Pluie de lames","Unleash Chaos":"Déchaîner le chaos","Vicious Entangle":"Enchevêtrement vicieux","Pick and Pull":"Crocheter et subtiliser","Inspirational Words":"Paroles inspirantes","Not Good Enough":"Pas assez bon","I See It Coming":"Je l’avais vu venir","Whirlwind":"Tourbillon","I Am Your Shield":"Je suis ton bouclier","Untouchable":"Intouchable"},VF_RANGE={"Très proche":"Très courte","Proche":"Courte","Très lointaine":"Très longue","Lointaine":"Longue"};
+function normChar(c){if(!c||typeof c!=="object")return c;(c.cards||[]).forEach(cd=>{if(VF_DOM[cd.domain])cd.domain=VF_DOM[cd.domain];if(VF_CARD[cd.name])cd.name=VF_CARD[cd.name]});
+ [c.prim,c.sec].forEach(w=>{if(w&&VF_RANGE[w.r])w.r=VF_RANGE[w.r]});(c.items||[]).forEach(it=>{if(it&&typeof it.name==="string")it.name=it.name.replace(/[Pp]otion de soin/,m=>m[0]+"otion de santé")});return c}
 function mkCard(dom,c){return{id:uid(),name:c[0],domain:dom,level:1,type:c[1],recall:c[2],text:c[3],loc:"loadout"}}
-function loadLocal(){try{const s=JSON.parse(localStorage.getItem(LKEY)||"null");if(s){L.chars=s.chars||[];L.table=Object.assign(L.table,s.table||{});L.gm=s.gm||"";L.role=s.role||"joueur";L.wiz=s.wiz||null;L.dice=s.dice||"virtuel"}}catch(e){}
+function loadLocal(){try{const s=JSON.parse(localStorage.getItem(LKEY)||"null");if(s){L.chars=(s.chars||[]).map(normChar);L.table=Object.assign(L.table,s.table||{});L.gm=s.gm||"";L.role=s.role||"joueur";L.wiz=s.wiz||null;L.dice=s.dice||"virtuel"}}catch(e){}
  if(!L.chars.length)L.chars=examples();}
 function saveLocal(){try{localStorage.setItem(LKEY,JSON.stringify({chars:L.mode==="local"?L.chars:[],table:L.mode==="local"?L.table:{},gm:L.mode==="local"?L.gm:"",role:L.role,wiz:L.wiz,dice:L.dice}))}catch(e){}}
 const timers={},inflight={},dirty=new Set();
@@ -570,7 +574,7 @@ async function connect(){
   const byP={},subs={};
   const merge=()=>{const all=Object.values(byP).flat();const mine=new Map(L.chars.map(c=>[c.id,c]));
    L.chars=all.map(x=>dirty.has(x.id)&&mine.has(x.id)?mine.get(x.id):x).sort((a,b)=>(a.name||"").localeCompare(b.name||""));L.chars.filter(x=>x.owner===L.me.id).forEach(publishParty);softRender()};
-  const watch=pid=>{if(subs[pid])return;subs[pid]=db.collection("players/"+pid+"/chars").onSnapshot(s=>{byP[pid]=s.docs.map(d=>{const x=d.data();x.id=d.id;x.owner=x.owner||pid;return x});merge()},()=>{})};
+  const watch=pid=>{if(subs[pid])return;subs[pid]=db.collection("players/"+pid+"/chars").onSnapshot(s=>{byP[pid]=s.docs.map(d=>{const x=normChar(d.data());x.id=d.id;x.owner=x.owner||pid;return x});merge()},()=>{})};
   watch(id);
   if(L.me.canEdit){
    db.collection("players").onSnapshot(s=>{s.docs.forEach(d=>watch(d.id))},()=>{});
@@ -586,8 +590,8 @@ async function connect(){
 
 /* =================== EFFETS ACTIFS (bonus / malus) =================== */
 const EFF_SRC=["Équipement","Artefact","Maléfice","Bénédiction","Sort","Condition","Blessure","Potion","Autre"];
-const EFF_TGT=Object.assign({all:"Tous les jets",attack:"Jets d’attaque",spell:"Jets d’incantation",reaction:"Jets de réaction"},Object.fromEntries(TRAITS.map(([k,n])=>["trait:"+k,"Jets de "+n])),{damage:"Dégâts infligés",evasion:"Évasion",armor:"Score d’armure",thresholds:"Seuils de dégâts",hp:"Cases de PV",stress:"Cases de Stress"});
-const EFF_DUR={perm:"Persistant",next:"Prochain jet seulement",uses:"X utilisations",scene:"Jusqu’à la fin de la scène",short:"Jusqu’au prochain repos",long:"Jusqu’au repos long"};
+const EFF_TGT=Object.assign({all:"Tous les jets",attack:"Jets d’attaque",spell:"Jets d’incantation",reaction:"Jets de réaction"},Object.fromEntries(TRAITS.map(([k,n])=>["trait:"+k,"Jets de "+n])),{damage:"Dégâts infligés",evasion:"Esquive",armor:"Score d’armure",thresholds:"Seuils de dégâts",hp:"Cases de PV",stress:"Cases de Stress"});
+const EFF_DUR={perm:"Persistant",next:"Prochain jet seulement",uses:"X utilisations",scene:"Jusqu’à la fin de la scène",short:"Jusqu’au prochain repos",long:"Jusqu’au long repos"};
 const EFF_PRESETS=[
  {name:"Bénédiction",src:"Bénédiction",val:1,adv:0,tgt:"all",dur:"next"},
  {name:"Maléfice",src:"Maléfice",val:-1,adv:0,tgt:"all",dur:"perm"},
@@ -606,17 +610,17 @@ const effLabel=e=>{const v=+e.val,a=+e.adv;const parts=[];if(v)parts.push(sign(v
 const ITEM_CATS=["Objet","Consommable","Artefact","Relique","Arme","Butin"];
 const USE_KINDS={none:"Aucun effet automatique",hp:"Retire des PV",stress:"Retire du Stress",hope:"Donne de l’Espoir",armor:"Répare l’armure",effect:"Ajoute un effet temporaire"};
 const ITEM_PRESETS=[
- {name:"Potion de soin mineure",cat:"Consommable",qty:1,use:{kind:"hp",dice:"1d4"},note:"Retire 1d4 PV."},
+ {name:"Potion de santé mineure",cat:"Consommable",qty:1,use:{kind:"hp",dice:"1d4"},note:"Retire 1d4 PV."},
  {name:"Potion d’endurance mineure",cat:"Consommable",qty:1,use:{kind:"stress",dice:"1d4"},note:"Retire 1d4 Stress."},
  {name:"Huile d’arme",cat:"Consommable",qty:1,use:{kind:"effect",dice:"",eff:{val:1,adv:0,tgt:"damage",dur:"scene"}},note:"+1 aux dégâts jusqu’à la fin de la scène."},
  {name:"Relique de trait",cat:"Relique",qty:1,equip:true,mods:[{val:1,adv:0,tgt:"trait:agilite"}],note:"+1 à un trait (choisissez-le). Une seule relique active à la fois."},
- {name:"Anneau de protection",cat:"Artefact",qty:1,equip:true,mods:[{val:1,adv:0,tgt:"evasion"}],note:"+1 Évasion tant qu’il est porté."},
+ {name:"Anneau de protection",cat:"Artefact",qty:1,equip:true,mods:[{val:1,adv:0,tgt:"evasion"}],note:"+1 Esquive tant qu’il est porté."},
  {name:"Amulette maudite",cat:"Artefact",qty:1,equip:true,mods:[{val:-1,adv:0,tgt:"all"},{val:2,adv:0,tgt:"damage"}],note:"−1 à tous les jets, +2 aux dégâts."},
  {name:"Torche",cat:"Objet",qty:1},{name:"Corde (15 m)",cat:"Objet",qty:1},{name:"Rations",cat:"Objet",qty:3}];
 const KIT=()=>["Torche","Corde (15 m)","Rations"].map(n=>({...clone(ITEM_PRESETS.find(p=>p.name===n)),id:uid()}));
 function clone(o){return JSON.parse(JSON.stringify(o))}
 function itemEffects(c){return (c.items||[]).filter(it=>it.equip&&(it.mods||[]).length).flatMap(it=>it.mods.map(m=>({name:it.name,src:it.cat,val:+m.val||0,adv:+m.adv||0,tgt:m.tgt,dur:"perm",on:true,item:true})))}
-const RANGES=["Mêlée","Très proche","Proche","Lointaine","Très lointaine"];
+const RANGES=["Mêlée","Très courte","Courte","Longue","Très longue"];
 function weaponCard(w,slot,c,d){const tr=TK[w.t];return `<div class="wcard"><div class="wcard-top"><span class="emb sm">${emblem(w.dt==="mag"?"star":"swords",w.dt==="mag"?"#b07ae0":"#d9ad5b","#d9ad5b",false)}</span><div style="min-width:0"><b>${esc(w.n)}</b><div class="small muted">${slot==="prim"?"Principale":"Secondaire"} &middot; ${w.h===2?"deux mains":"une main"}${w.dt==="mag"?" &middot; magique":""}</div></div></div>
  <div class="wstats"><span><small>Trait</small>${esc(w.t)} ${d?sign(d.tr[tr]??0):""}</span><span><small>Portée</small>${esc(w.r)}</span><span><small>Dégâts</small>${d?d.prof:""}${esc(w.d)} ${w.dt}</span></div>
  ${w.f?`<p class="small muted" style="margin:6px 0 0">${esc(w.f)}</p>`:""}
@@ -628,7 +632,7 @@ function customWeaponForm(){return `<details class="fold"><summary>Ajouter une a
  <label class="f">Dégâts<input id="cw-d" placeholder="d10+5"></label>
  <label class="f">Type<select id="cw-dt"><option value="phy">Physique</option><option value="mag">Magique</option></select></label>
  <label class="f">Mains<select id="cw-h"><option value="1">Une</option><option value="2">Deux</option></select></label>
- <label class="f">Mod. Évasion<input id="cw-ev" type="number" value="0"></label><label class="f">Mod. Armure<input id="cw-arm" type="number" value="0"></label></div>
+ <label class="f">Mod. Esquive<input id="cw-ev" type="number" value="0"></label><label class="f">Mod. Armure<input id="cw-arm" type="number" value="0"></label></div>
  <label class="f" style="margin-top:8px">Propriété<input id="cw-f" placeholder="Ex. : Brutale, relancez les 1"></label>
  <div class="flexgap" style="margin-top:10px"><button class="btn sm pri" data-act="cweq" data-k="prim">Équiper en principale</button><button class="btn sm" data-act="cweq" data-k="sec">Équiper en secondaire</button><button class="btn sm" data-act="cweq" data-k="inv">Mettre dans l’inventaire</button></div></details>`}
 function itemRow(it,i,c){const isW=it.cat==="Arme"&&it.w;const equipable=!isW&&it.cat!=="Consommable";
@@ -655,12 +659,12 @@ function sInv(c,d){const g=c.gold,items=c.items||[];const invW=items.filter(x=>x
  <h3>Objet personnalisé</h3><div class="row r3"><label class="f">Nom<input id="it-n" placeholder="Ex. : Cape d’ombre"></label><label class="f">Catégorie<select id="it-c">${ITEM_CATS.filter(x=>x!=="Arme").map(x=>`<option>${x}</option>`).join("")}</select></label><label class="f">Quantité<input id="it-q" type="number" value="1" min="1"></label>
  <label class="f">Bonus ou malus<input id="it-v" type="number" value="0"></label><label class="f">Avantage<select id="it-a"><option value="0">Aucun</option><option value="1">Avantage</option><option value="-1">Désavantage</option></select></label><label class="f">Sur<select id="it-t">${Object.entries(EFF_TGT).map(([k,v])=>`<option value="${k}">${v}</option>`).join("")}</select></label></div>
  <label class="f" style="margin-top:8px">Note<input id="it-note" placeholder="Ex. : se dissipe en plein soleil"></label><button class="btn pri" data-act="itemadd" style="margin-top:10px">Ajouter</button></section>
- <section class="box"><h2>Or</h2><div class="row r3">${fld("Poignées","gold.h",g.h,"number","data-num")}${fld("Bourses","gold.b",g.b,"number","data-num")}${fld("Coffres","gold.c",g.c,"number","data-num")}</div><p class="small muted" style="margin-top:6px">10 poignées = 1 bourse, 10 bourses = 1 coffre.</p>${area("Notes d’inventaire","inv",c.inv,3)}${fld("Bonus d’Évasion divers","extraEv",c.extraEv,"number",'data-num data-r="all"')}</section>`}
+ <section class="box"><h2>Or</h2><div class="row r3">${fld("Poignées","gold.h",g.h,"number","data-num")}${fld("Bourses","gold.b",g.b,"number","data-num")}${fld("Coffres","gold.c",g.c,"number","data-num")}</div><p class="small muted" style="margin-top:6px">10 poignées = 1 bourse, 10 bourses = 1 coffre.</p>${area("Notes d’inventaire","inv",c.inv,3)}${fld("Bonus d’Esquive divers","extraEv",c.extraEv,"number",'data-num data-r="all"')}</section>`}
 function equipEditor(c){const d=derive(c);const wiz=L.view==="wizard";
- return `<section class="box"><h2>Armure</h2><p class="small muted">Votre niveau s’ajoute aux seuils de base. Les armures lourdes coûtent de l’Évasion.</p>
+ return `<section class="box"><h2>Armure</h2><p class="small muted">Votre niveau s’ajoute aux seuils de base. Les armures lourdes coûtent de l’Esquive.</p>
  <div class="picks">${Object.entries(ARMORS).map(([k,a])=>`<button class="pick ${c.armor.preset===k?"on":""}" data-armor="${k}"><div class="top"><span class="emb sm">${emblem("shield","#a8b0c8","#d9ad5b",false)}</span><b>${a.n}</b></div><p class="small">Seuils ${k==="none"?"niveau / 2 x niveau":a.major+" / "+a.severe} &middot; Armure ${a.score}</p>${a.feat?`<p class="small muted">${a.feat}</p>`:""}</button>`).join("")}</div>
- ${wiz?"":`<details class="fold"><summary>Armure d’un autre tier ou trouvée en jeu : modifier les valeurs</summary><div class="row r3" style="margin-top:10px">${fld("Nom","armor.n",c.armor.n)}${fld("Seuil majeur (base)","armor.major",c.armor.major,"number",'data-num data-r="all"')}${fld("Seuil grave (base)","armor.severe",c.armor.severe,"number",'data-num data-r="all"')}${fld("Score","armor.score",c.armor.score,"number",'data-num data-r="all"')}${fld("Mod. Évasion","armor.ev",c.armor.ev,"number",'data-num data-r="all"')}</div>${fld("Propriétés","armor.feat",c.armor.feat)}</details>`}
- ${d?`<div class="sumline"><span>Évasion <b>${d.ev}</b></span><span>Armure <b>${d.armor}</b></span><span>Seuils <b>${d.major} / ${d.severe}</b></span></div>`:""}</section>
+ ${wiz?"":`<details class="fold"><summary>Armure d’un autre tier ou trouvée en jeu : modifier les valeurs</summary><div class="row r3" style="margin-top:10px">${fld("Nom","armor.n",c.armor.n)}${fld("Seuil majeur (base)","armor.major",c.armor.major,"number",'data-num data-r="all"')}${fld("Seuil grave (base)","armor.severe",c.armor.severe,"number",'data-num data-r="all"')}${fld("Score","armor.score",c.armor.score,"number",'data-num data-r="all"')}${fld("Mod. Esquive","armor.ev",c.armor.ev,"number",'data-num data-r="all"')}</div>${fld("Propriétés","armor.feat",c.armor.feat)}</details>`}
+ ${d?`<div class="sumline"><span>Esquive <b>${d.ev}</b></span><span>Armure <b>${d.armor}</b></span><span>Seuils <b>${d.major} / ${d.severe}</b></span></div>`:""}</section>
  <section class="box"><h2>Armes en main</h2>
  ${c.prim||c.sec?`<div class="wgrid">${c.prim?weaponCard(c.prim,"prim",c,d):""}${c.sec?weaponCard(c.sec,"sec",c,d):""}</div>`:`<p class="small muted">Aucune arme en main.</p>`}
  ${wiz?"":customWeaponForm()}
@@ -774,7 +778,7 @@ async function buildSheetPdf(c){
  const photo=await photoJpeg(c.photo);const ph=86;
  box(M,y,CW,ph,{fill:SOFT,stroke:SOFT});P.rect(M,y,6,ph,{fill:ACC});P.rect(M+6,y,3,ph,{fill:ACC2});
  let rx=M+CW;if(photo){P.image(photo,360,360,rx-ph,y,ph,ph);rx-=ph+10}else rx-=10;
- P.rect(rx-62,y+12,62,62,{fill:"#ffffff",stroke:ACC,lw:1.2,r:8});label(rx-31,y+26,"Niveau",{align:"center"});P.text(rx-31,y+56,c.level,{size:26,font:"B",align:"center",color:INK});P.text(rx-31,y+68,"Tier "+d.tier,{size:7,align:"center",color:MUT});
+ P.rect(rx-62,y+12,62,62,{fill:"#ffffff",stroke:ACC,lw:1.2,r:8});label(rx-31,y+26,"Niveau",{align:"center"});P.text(rx-31,y+56,c.level,{size:26,font:"B",align:"center",color:INK});P.text(rx-31,y+68,"Rang "+d.tier,{size:7,align:"center",color:MUT});
  const tx=M+20,tmax=rx-72-tx;
  P.text(tx,y+30,c.name||"Sans nom",{size:22,font:"B",max:tmax});
  P.text(tx,y+46,cl.n+(sb.n?"  ·  "+sb.n:""),{size:11,font:"B",color:ACC,max:tmax});
@@ -784,11 +788,11 @@ async function buildSheetPdf(c){
  y+=ph+12;
  /* Défense */
  const gh=58,gw=[64,150,96];let gx=M;
- box(gx,y,gw[0],gh);label(gx+gw[0]/2,y+13,"Évasion",{align:"center"});P.text(gx+gw[0]/2,y+44,d.ev,{size:26,font:"B",align:"center"});gx+=gw[0]+8;
+ box(gx,y,gw[0],gh);label(gx+gw[0]/2,y+13,"Esquive",{align:"center"});P.text(gx+gw[0]/2,y+44,d.ev,{size:26,font:"B",align:"center"});gx+=gw[0]+8;
  box(gx,y,gw[1],gh);label(gx+9,y+13,"Armure");P.text(gx+gw[1]-9,y+13,"Score "+d.armor,{size:8.5,font:"B",align:"right"});
  for(let i=0;i<d.armor&&i<12;i++){const sx=gx+9+(i%6)*22,sy=y+21+Math.floor(i/6)*17;P.rect(sx,sy,16,13,{stroke:INK,lw:.8,r:2,fill:i<(c.armorUsed||0)?INK:null})}
  if(!d.armor)P.text(gx+9,y+36,"Aucune armure",{size:8,color:MUT});gx+=gw[1]+8;
- box(gx,y,gw[2],gh);label(gx+gw[2]/2,y+13,"Maîtrise",{align:"center"});for(let i=0;i<6;i++)P.circle(gx+15+i*13.2,y+31,4.6,{stroke:INK,fill:i<d.prof?INK:null});P.text(gx+gw[2]/2,y+50,"Dés de dégâts x "+d.prof,{size:7,color:MUT,align:"center"});gx+=gw[2]+8;
+ box(gx,y,gw[2],gh);label(gx+gw[2]/2,y+13,"Compétence",{align:"center"});for(let i=0;i<6;i++)P.circle(gx+15+i*13.2,y+31,4.6,{stroke:INK,fill:i<d.prof?INK:null});P.text(gx+gw[2]/2,y+50,"Dés de dégâts x "+d.prof,{size:7,color:MUT,align:"center"});gx+=gw[2]+8;
  const sw=M+CW-gx;box(gx,y,sw,gh);label(gx+9,y+13,"Seuils de dégâts");
  const seg=(sw-18-2*30)/3,sy=y+21;[["Mineurs","1 PV"],["Majeurs","2 PV"],["Graves","3 PV"]].forEach(([n,p],i)=>{const x=gx+9+i*(seg+30);P.rect(x,sy,seg,30,{fill:SOFT,r:4});P.text(x+seg/2,sy+13,n,{size:7.8,font:"B",align:"center"});P.text(x+seg/2,sy+23,p,{size:6.8,color:MUT,align:"center"})});
  [d.major,d.severe].forEach((v,i)=>{const x=gx+9+seg*(i+1)+30*i+15;P.circle(x,sy+15,14,{fill:"#ffffff",stroke:ACC,lw:1.4});P.text(x,sy+19.5,v,{size:12.5,font:"B",align:"center"})});
@@ -814,7 +818,7 @@ async function buildSheetPdf(c){
  ry+=4;ry=head(rx2,ry,rw,"Or",ACC2);const g=c.gold||{};[["Poignées",+g.h||0,9],["Bourses",+g.b||0,9],["Coffre",+g.c||0,1]].forEach(([n,v,mx])=>{P.text(rx2,ry+8,n,{size:8,font:"B"});for(let k=0;k<mx;k++)P.circle(rx2+58+k*13,ry+5,4.4,{stroke:INK,fill:k<v?"#d4a017":null});if(v>mx)P.text(rx2+58+mx*13,ry+8,"x"+v,{size:7.5,color:MUT});ry+=15});
  y=Math.max(ly,ry)+6;
  /* Armes et armure */
- y=head(M,y,CW,"Armes actives  ·  Maîtrise "+d.prof);
+ y=head(M,y,CW,"Armes actives  ·  Compétence "+d.prof);
  const colx=[0,.27,.47,.6];[["Arme",0],["Trait et portée",1],["Dégâts",2],["Propriété",3]].forEach(([n,i])=>label(M+colx[i]*CW+(i?0:5),y,n));y+=5;
  const row=(slot,name,t2,t3,feat)=>{P.rect(M,y,CW,26,{fill:SOFT,r:3});label(M+5,y+8,slot,{size:5.6});P.text(M+5,y+20,name,{size:9,font:"B",max:CW*.27-10,color:name==="-"?MUT:INK});P.text(M+.27*CW,y+16,t2,{size:8.3,max:CW*.2-6});P.text(M+.47*CW,y+16,t3,{size:9,font:"B",max:CW*.13-4});P.wrap(feat||"-",CW*.4-6,7).slice(0,2).forEach((l,j)=>P.text(M+.6*CW,y+11+j*8.3,l,{size:7}));y+=30};
  [["Principale",c.prim],["Secondaire",c.sec]].forEach(([slot,w])=>w?row(slot,w.n,w.t+" "+sign(d.tr[TK[w.t]]??0)+"  ·  "+w.r,d.prof+w.d+(w.dt==="mag"?" mag.":" phy."),w.f):row(slot,"-","","",""));
@@ -833,7 +837,7 @@ async function buildSheetPdf(c){
   const x=M+k*(colW+12),yy=cyy[k],dc=DOMCOL[cd.domain]||ACC;box(x,yy,colW,h-6,{fill:"#ffffff"});P.rect(x,yy,colW,4,{fill:dc,r:2});P.text(x+8,yy+17,cd.name,{size:9.5,font:"B",max:colW-70});
   P.text(x+colW-8,yy+17,"Rappel "+(cd.recall??0),{size:7.2,color:MUT,align:"right"});label(x+8,yy+27,[cd.domain,cd.type,"niv. "+(cd.level||1)].filter(Boolean).join("  ·  "),{size:5.8,color:dc});
   lines.forEach((l,j)=>P.text(x+8,yy+37+j*8.8,l,{size:7.3}));cyy[k]=yy+h});y=Math.max(...cyy)+4};
- drawCards(cardsBy("loadout"),"Cartes de domaine  ·  En main ("+cardsBy("loadout").length+"/5)");drawCards(cardsBy("vault"),"Cartes de domaine  ·  Réserve");
+ drawCards(cardsBy("loadout"),"Cartes de domaine  ·  En main ("+cardsBy("loadout").length+"/5)");drawCards(cardsBy("vault"),"Cartes de domaine  ·  Caveau");
  if(!(c.cards||[]).length){section("Cartes de domaine");P.text(M,y+8,"Aucune carte.",{size:8,color:MUT});y+=16}
  const items=c.items||[];section("Inventaire",ACC2);
  items.forEach(it=>{const mods=(it.mods||[]).map(m=>((+m.val)?sign(+m.val)+" ":"")+((+m.adv)?(m.adv>0?"avantage ":"désavantage "):"")+(EFF_TGT[m.tgt]||m.tgt)).join(", ");
@@ -941,11 +945,11 @@ function previewCard(c){const cl=CLASSES[c.classe],d=derive(c);
  return `<section class="box"><div class="portrait" style="margin-bottom:10px">${portrait(c)}</div>
  <b style="font:700 1.4rem var(--f-display)">${esc(c.name||"Sans nom")}</b>
  <p class="small muted">${cl?cl.n:"Classe ?"}${c.sub&&cl?" &middot; "+cl.subs[c.sub].n:""}<br>${c.anc1?ANC[c.anc1].n+(c.mixed&&c.anc2&&c.anc2!==c.anc1?" / "+ANC[c.anc2].n:""):"Ascendance ?"} &middot; ${c.comm?COMM[c.comm].n:"Communauté ?"}</p>
- ${d?`<div class="stats" style="grid-template-columns:repeat(2,minmax(0,1fr))"><div class="stat"><small>Évasion</small><strong>${d.ev}</strong></div><div class="stat"><small>PV</small><strong>${d.hp}</strong></div><div class="stat"><small>Stress</small><strong>${d.st}</strong></div><div class="stat"><small>Seuils</small><strong style="font-size:1.15rem">${d.major}/${d.severe}</strong></div></div>
+ ${d?`<div class="stats" style="grid-template-columns:repeat(2,minmax(0,1fr))"><div class="stat"><small>Esquive</small><strong>${d.ev}</strong></div><div class="stat"><small>PV</small><strong>${d.hp}</strong></div><div class="stat"><small>Stress</small><strong>${d.st}</strong></div><div class="stat"><small>Seuils</small><strong style="font-size:1.15rem">${d.major}/${d.severe}</strong></div></div>
  <p class="small" style="margin-top:8px">${TRAITS.map(([k,n])=>`${n} <b>${c.traits[k].v===null?"?":sign(d.tr[k])}</b>`).join(" &middot; ")}</p>`:""}
  </section>`}
-function wClass(c){return `<section class="box"><h2>Choisissez votre classe</h2><p class="small muted">La classe fixe vos deux domaines de cartes, vos PV et votre Évasion de départ.</p>
- <div class="picks">${Object.entries(CLASSES).map(([k,v])=>`<button class="pick ${c.classe===k?"on":""}" data-set="classe" data-v="${k}"><div class="top"><span class="emb">${classEmb(k)}</span><div><b>${v.n}</b><p class="small">${v.dom.map(x=>`<span style="color:${DOMCOL[x]};font-weight:700">${x}</span>`).join(" &amp; ")}</p></div></div><p>${v.pitch}</p><p class="small muted">Évasion ${v.ev} &middot; PV ${v.hp} &middot; Espoir : ${v.hope[0]}</p></button>`).join("")}</div>
+function wClass(c){return `<section class="box"><h2>Choisissez votre classe</h2><p class="small muted">La classe fixe vos deux domaines de cartes, vos PV et votre Esquive de départ.</p>
+ <div class="picks">${Object.entries(CLASSES).map(([k,v])=>`<button class="pick ${c.classe===k?"on":""}" data-set="classe" data-v="${k}"><div class="top"><span class="emb">${classEmb(k)}</span><div><b>${v.n}</b><p class="small">${v.dom.map(x=>`<span style="color:${DOMCOL[x]};font-weight:700">${x}</span>`).join(" &amp; ")}</p></div></div><p>${v.pitch}</p><p class="small muted">Esquive ${v.ev} &middot; PV ${v.hp} &middot; Espoir : ${v.hope[0]}</p></button>`).join("")}</div>
  ${c.classe?`<section class="box" style="margin-top:12px;background:var(--bg)">${classFeats(c.classe)}</section>`:""}</section>`}
 function classFeats(k){const v=CLASSES[k];return `<div class="feat hope"><span class="tag">Capacité d’Espoir &middot; 3 Espoir</span><b>${v.hope[0]}</b><p>${v.hope[1]}</p></div>${v.feats.map(f=>`<div class="feat"><span class="tag">Classe</span><b>${f[0]}</b><p>${f[1]}</p></div>`).join("")}<p class="small muted">Domaines : ${v.dom.map(x=>`<b style="color:${DOMCOL[x]}">${x}</b> (${DOMDESC[x]})`).join(", ")}.</p>`}
 function wSub(c){if(!c.classe)return `<section class="box"><p>Choisissez d’abord une classe.</p></section>`;const cl=CLASSES[c.classe];
@@ -974,7 +978,7 @@ function weaponTable(c,list,slot){const cur=c[slot];
 function wEquip(c){if(!c.classe||!c.sub)return `<section class="box"><p>Choisissez d’abord classe et sous-classe : elles déterminent les armes autorisées.</p></section>`;
  const pot=(c.items||[]).find(x=>/Potion (de soin|d’endurance) mineure/.test(x.name));
  return equipEditor(c)+`<section class="box"><h2>Paquetage de départ</h2><p class="small">Une poignée d’or, une torche, 15 m de corde, des rations, et une potion au choix :</p>
- <div class="picks"><button class="pick ${pot&&/soin/.test(pot.name)?"on":""}" data-act="potion" data-k="0"><div class="top"><span class="emb sm">${emblem("flame","#f26b63","#d9ad5b",false)}</span><b>Potion de soin mineure</b></div><p>Retire 1d4 PV.</p></button>
+ <div class="picks"><button class="pick ${pot&&/soin/.test(pot.name)?"on":""}" data-act="potion" data-k="0"><div class="top"><span class="emb sm">${emblem("flame","#f26b63","#d9ad5b",false)}</span><b>Potion de santé mineure</b></div><p>Retire 1d4 PV.</p></button>
  <button class="pick ${pot&&/endurance/.test(pot.name)?"on":""}" data-act="potion" data-k="1"><div class="top"><span class="emb sm">${emblem("wave","#4fc6cf","#d9ad5b",false)}</span><b>Potion d’endurance mineure</b></div><p>Retire 1d4 Stress.</p></button></div></section>`}
 function wExp(c){return `<section class="box"><h2>Expériences</h2><p class="small muted">Deux Expériences à +2. Une Expérience est un mot ou une courte phrase qui décrit un savoir-faire, un passé ou un trait. En jeu, dépensez 1 Espoir pour ajouter son bonus à un jet où elle s’applique. Évitez les expériences trop larges comme « Chanceux » ou « Bon en combat ».</p>
  ${c.exps.map((e,i)=>`<div class="flexgap" style="margin-bottom:8px"><input style="flex:1 1 200px" data-p="exps.${i}.name" value="${esc(e.name)}" placeholder="Expérience ${i+1}" aria-label="Expérience ${i+1}"><span class="chip">+${e.v}</span></div>`).join("")}
@@ -1007,9 +1011,9 @@ function sFiche(c,d){const cl=CLASSES[c.classe],sb=cl.subs[c.sub],a1=ANC[c.anc1]
  return `${c.example?`<div class="note" style="margin-bottom:12px">Fiche d’exemple. Modifiez-la ou créez votre propre personnage. <button class="btn sm" data-act="unexample">Masquer</button></div>`:""}
  <div class="grid"><div class="col">
  <section class="box"><div style="display:grid;grid-template-columns:110px minmax(0,1fr);gap:14px;align-items:center"><div class="portrait">${portrait(c)}</div>
-  <div style="min-width:0">${fld("Nom","name",c.name)}<p class="small muted" style="margin:6px 0 0">${cl.n} &middot; ${sb.n} &middot; ${ANC[c.anc1].n}${c.anc2&&c.anc2!==c.anc1?" / "+ANC[c.anc2].n:""} &middot; ${cm.n}<br>Niveau ${c.level} &middot; Tier ${d.tier} &middot; Incantation : <b>${sb.sc||"aucune"}</b> &middot; ${cl.dom.map(x=>`<b style="color:${DOMCOL[x]}">${x}</b>`).join(" &amp; ")}</p></div></div></section>
+  <div style="min-width:0">${fld("Nom","name",c.name)}<p class="small muted" style="margin:6px 0 0">${cl.n} &middot; ${sb.n} &middot; ${ANC[c.anc1].n}${c.anc2&&c.anc2!==c.anc1?" / "+ANC[c.anc2].n:""} &middot; ${cm.n}<br>Niveau ${c.level} &middot; Rang ${d.tier} &middot; Incantation : <b>${sb.sc||"aucune"}</b> &middot; ${cl.dom.map(x=>`<b style="color:${DOMCOL[x]}">${x}</b>`).join(" &amp; ")}</p></div></div></section>
  <section class="box"><h2>Traits</h2><div class="traits">${TRAITS.map(([k,n,v])=>`<div class="trait"><b>${n}</b><input type="number" min="-3" max="8" data-p="traits.${k}.v" data-num value="${c.traits[k].v??0}" aria-label="${n}">${d.tr[k]!==+(c.traits[k].v??0)?`<span class="warn" style="font-size:.72rem">effectif ${sign(d.tr[k])}</span>`:""}<span class="verbs">${v}</span><label><input type="checkbox" data-p="traits.${k}.m" ${c.traits[k].m?"checked":""}>marqué</label></div>`).join("")}</div></section>
- <section class="box"><h2>Défense</h2><div class="stats"><div class="stat"><small>Évasion</small><strong>${d.ev}</strong></div><div class="stat"><small>Armure</small><strong>${d.armor}</strong></div><div class="stat"><small>Maîtrise</small><strong>${d.prof}</strong></div><div class="stat"><small>Niveau</small><strong>${c.level}</strong></div></div>
+ <section class="box"><h2>Défense</h2><div class="stats"><div class="stat"><small>Esquive</small><strong>${d.ev}</strong></div><div class="stat"><small>Armure</small><strong>${d.armor}</strong></div><div class="stat"><small>Compétence</small><strong>${d.prof}</strong></div><div class="stat"><small>Niveau</small><strong>${c.level}</strong></div></div>
   <h3>Seuils de dégâts</h3><div class="thresh"><span class="seg">Mineurs &middot; 1 PV</span><span class="num">${d.major}</span><span class="seg">Majeurs &middot; 2 PV</span><span class="num">${d.severe}</span><span class="seg">Graves &middot; 3 PV</span></div>
   <h3>Armes</h3>${[c.prim,c.sec].filter(Boolean).map(w=>`<p class="small"><b>${esc(w.n)}</b> &middot; ${w.t} ${sign(d.tr[TK[w.t]]??0)} &middot; ${w.r} &middot; <b>${d.prof}${w.d}</b> ${w.dt}${w.f?` &middot; <span class="muted">${esc(w.f)}</span>`:""}</p>`).join("")||`<p class="small muted">Aucune arme.</p>`}
  </section></div><div class="col">
@@ -1022,8 +1026,8 @@ function sFiche(c,d){const cl=CLASSES[c.classe],sb=cl.subs[c.sub],a1=ANC[c.anc1]
   <div class="flexgap" style="margin-bottom:10px"><button class="btn sm pri" data-act="hopefeat" ${c.hope<3?"disabled":""}>Utiliser ${esc(CLASSES[c.classe].hope[0])} (3 Espoir)</button></div>
   ${c.hp>=d.hp?`<p class="warn">Dernier PV marqué : choisissez un geste de mort.</p><div class="flexgap" style="margin-bottom:8px"><button class="btn sm" data-act="death" data-k="glory">Éclat de gloire</button><button class="btn sm" data-act="death" data-k="avoid">Éviter la mort</button><button class="btn sm" data-act="death" data-k="risk">Risquer le tout</button></div><p class="small" id="deathres"></p>`:""}
   ${c.stress>=d.st?`<p class="warn">Stress plein : chaque Stress de plus devient 1 PV, et vous êtes Vulnérable.</p>`:""}
-  <h3>Repos court : choisissez 2 actions</h3><div class="flexgap"><button class="btn sm" data-act="rest" data-k="hp">Soigner 1d4+${d.tier} PV</button><button class="btn sm" data-act="rest" data-k="stress">Retirer 1d4+${d.tier} Stress</button><button class="btn sm" data-act="rest" data-k="armorUsed">Réparer 1d4+${d.tier} armure</button><button class="btn sm" data-act="prepare">Préparer (+1 Espoir)</button><button class="btn sm" data-act="endrest" data-k="short">Repos court terminé</button></div>
-  <h3>Repos long : choisissez 2 actions</h3><div class="flexgap"><button class="btn sm" data-act="lr" data-k="hp">Soigner tous les PV</button><button class="btn sm" data-act="lr" data-k="stress">Retirer tout le Stress</button><button class="btn sm" data-act="lr" data-k="armorUsed">Réparer toute l’armure</button><button class="btn sm" data-act="prepare">Préparer (+1 Espoir)</button><button class="btn sm" data-act="endrest" data-k="long">Repos long terminé</button></div>
+  <h3>Court repos : choisissez 2 actions</h3><div class="flexgap"><button class="btn sm" data-act="rest" data-k="hp">Soigner 1d4+${d.tier} PV</button><button class="btn sm" data-act="rest" data-k="stress">Retirer 1d4+${d.tier} Stress</button><button class="btn sm" data-act="rest" data-k="armorUsed">Réparer 1d4+${d.tier} armure</button><button class="btn sm" data-act="prepare">Préparer (+1 Espoir)</button><button class="btn sm" data-act="endrest" data-k="short">Court repos terminé</button></div>
+  <h3>Long repos : choisissez 2 actions</h3><div class="flexgap"><button class="btn sm" data-act="lr" data-k="hp">Soigner tous les PV</button><button class="btn sm" data-act="lr" data-k="stress">Retirer tout le Stress</button><button class="btn sm" data-act="lr" data-k="armorUsed">Réparer toute l’armure</button><button class="btn sm" data-act="prepare">Préparer (+1 Espoir)</button><button class="btn sm" data-act="endrest" data-k="long">Long repos terminé</button></div>
   <p class="small muted" id="restres" style="margin-top:6px">Préparer à plusieurs : +2 Espoir chacun. Le MJ gagne de la Peur à chaque repos. Les boutons « terminé » font expirer les effets temporaires.</p>
  </section>
  <section class="box"><h2>Expériences</h2>${c.exps.map((e,i)=>`<div class="flexgap" style="margin-bottom:8px"><input style="flex:1 1 180px" data-p="exps.${i}.name" value="${esc(e.name)}" aria-label="Expérience ${i+1}"><input style="width:70px" type="number" data-p="exps.${i}.v" data-num value="${e.v}" aria-label="Bonus"><button class="btn sm danger" data-act="delexp" data-i="${i}" aria-label="Supprimer l’expérience">✕</button></div>`).join("")}
@@ -1055,7 +1059,7 @@ function sJets(c,d){const last=c.rolls[0],reel=L.dice==="reel";const act=(c.effe
  <div class="col"><section class="box"><h2>Encaisser des dégâts</h2><p class="small muted">Majeurs dès <b>${d.major}</b>, Graves dès <b>${d.severe}</b>. Une case d’armure réduit la gravité d’un cran.</p>
  <div class="row r3"><label class="f">Dégâts<input id="dmg" type="number" min="0" inputmode="numeric"></label><label class="f">Case d’armure<select id="dmg-arm"><option value="0">Non</option><option value="1" ${c.armorUsed>=d.armor?"disabled":""}>Oui</option></select></label></div>
  <p class="result" id="dmgres" style="margin:12px 0">&nbsp;</p><button class="btn pri" data-act="takedmg">Appliquer</button></section>
- <section class="box"><h2>Dégâts infligés</h2><p class="small muted">Dés = Maîtrise (${d.prof}). Critique : ajoutez le maximum des dés. Effets de dégâts actifs : <b>${sign(effs(c,["damage"]).val)}</b>.</p>
+ <section class="box"><h2>Dégâts infligés</h2><p class="small muted">Dés = Compétence (${d.prof}). Critique : ajoutez le maximum des dés. Effets de dégâts actifs : <b>${sign(effs(c,["damage"]).val)}</b>.</p>
  <div class="row r3"><label class="f">Arme<select id="wsel">${[c.prim,c.sec].filter(Boolean).map((w,i)=>`<option value="${i}">${esc(w.n)} (${d.prof}${w.d})</option>`).join("")}<option value="x">Autre</option></select></label>
  <label class="f">Dé (si autre)<select id="wd">${[4,6,8,10,12].map(x=>`<option ${x===8?"selected":""}>${x}</option>`).join("")}</select></label><label class="f">Bonus en plus<input id="wb" type="number" value="0"></label><label class="f">Critique<select id="wc"><option value="0">Non</option><option value="1">Oui</option></select></label>
  ${reel?`<label class="f">Total de vos dés<input id="wreal" type="number" min="1" inputmode="numeric"></label>`:""}</div>
@@ -1082,8 +1086,8 @@ function sRecap(c,d){const cl=CLASSES[c.classe],sb=cl.subs[c.sub],eq=effTraits(c
  <h3>Dégâts</h3>${[c.prim,c.sec].filter(Boolean).map(w=>`<p><b>${esc(w.n)}</b> : <b style="font:700 1.15rem var(--f-display)">${d.prof}${w.d}${dmgE?" "+sign(dmgE):""}</b> ${w.dt}${c.classe==="guerrier"&&w.dt==="phy"?` <span class="small muted">+${c.level} (Entraînement au combat)</span>`:""}</p>`).join("")||`<p class="small muted">Aucune arme.</p>`}
  <h3>Expériences (1 Espoir chacune)</h3><p>${c.exps.filter(e=>e.name).map(e=>`<span class="chip">${esc(e.name)} +${e.v}</span>`).join(" ")||`<span class="small muted">Aucune.</span>`} &nbsp;<span class="small">Espoir actuel : <b>${c.hope}</b></span></p>
  </section>
- <section class="box"><h2>Défense</h2><div class="stats"><div class="stat"><small>Évasion</small><strong>${d.ev}</strong></div><div class="stat"><small>Armure</small><strong>${d.armor}</strong></div><div class="stat"><small>Majeurs dès</small><strong>${d.major}</strong></div><div class="stat"><small>Graves dès</small><strong>${d.severe}</strong></div></div>
- <p class="small" style="margin-top:8px">Évasion : ${evParts.map(([a,b])=>`${a} ${a==="Classe"?b:sign(b)}`).join(", ")}.</p></section>
+ <section class="box"><h2>Défense</h2><div class="stats"><div class="stat"><small>Esquive</small><strong>${d.ev}</strong></div><div class="stat"><small>Armure</small><strong>${d.armor}</strong></div><div class="stat"><small>Majeurs dès</small><strong>${d.major}</strong></div><div class="stat"><small>Graves dès</small><strong>${d.severe}</strong></div></div>
+ <p class="small" style="margin-top:8px">Esquive : ${evParts.map(([a,b])=>`${a} ${a==="Classe"?b:sign(b)}`).join(", ")}.</p></section>
  <section class="box"><h2>À ne pas oublier</h2>
   <div class="feat hope"><b>${cl.hope[0]}</b><p>${cl.hope[1]}</p></div>
   ${sb.f.map(f=>`<div class="feat"><b>${f[0]}</b><p>${f[1]}</p></div>`).join("")}
@@ -1093,7 +1097,7 @@ function sRecap(c,d){const cl=CLASSES[c.classe],sb=cl.subs[c.sub],eq=effTraits(c
  </section></div>
  <div class="col"><section class="box"><h2>Effets actifs</h2><p class="small muted">Objets, artefacts, maléfices, bénédictions, blessures, conditions. Ils s’appliquent automatiquement aux jets et à la défense, puis disparaissent selon leur durée.</p>
   ${(c.effects||[]).map(effRow).join("")||`<p class="small muted">Aucun effet en cours.</p>`}
-  <div class="flexgap" style="margin-top:6px"><button class="btn sm" data-act="expire" data-k="scene">Fin de scène</button><button class="btn sm" data-act="expire" data-k="short">Repos court terminé</button><button class="btn sm" data-act="expire" data-k="long">Repos long terminé</button></div></section>
+  <div class="flexgap" style="margin-top:6px"><button class="btn sm" data-act="expire" data-k="scene">Fin de scène</button><button class="btn sm" data-act="expire" data-k="short">Court repos terminé</button><button class="btn sm" data-act="expire" data-k="long">Long repos terminé</button></div></section>
  <section class="box"><h2>Ajouter un effet</h2>
   <h3>Modèles rapides</h3><div class="flexgap">${EFF_PRESETS.map((p,i)=>`<button class="btn sm" data-act="effpreset" data-i="${i}">${esc(p.name)} (${effLabel(p)})</button>`).join("")}</div>
   <h3>Effet personnalisé</h3>
@@ -1105,18 +1109,18 @@ function sRecap(c,d){const cl=CLASSES[c.classe],sb=cl.subs[c.sub],eq=effTraits(c
   <label class="f" style="margin-top:8px">Note<input id="ef-note" placeholder="Ex. : seulement contre les morts-vivants"></label>
   <button class="btn pri" data-act="effadd" style="margin-top:10px">Ajouter l’effet</button></section></div></div>`}
 function sCartes(c,d){const cl=CLASSES[c.classe];const load=c.cards.filter(x=>x.loc==="loadout").length;
- const card=(x,i)=>`<div class="item card" style="--dc:${DOMCOL[x.domain]||"var(--fear)"}"><div class="itemhead"><span class="chip" style="color:${DOMCOL[x.domain]||"inherit"}">${esc(x.domain)} &middot; niv. ${esc(x.level)} &middot; rappel ${esc(x.recall)}</span><div class="flexgap"><button class="btn sm" data-act="movecard" data-i="${i}">${x.loc==="loadout"?"Vers la réserve":"Équiper"}</button><button class="btn sm danger" data-act="delcard" data-i="${i}">Supprimer</button></div></div>
+ const card=(x,i)=>`<div class="item card" style="--dc:${DOMCOL[x.domain]||"var(--fear)"}"><div class="itemhead"><span class="chip" style="color:${DOMCOL[x.domain]||"inherit"}">${esc(x.domain)} &middot; niv. ${esc(x.level)} &middot; rappel ${esc(x.recall)}</span><div class="flexgap"><button class="btn sm" data-act="movecard" data-i="${i}">${x.loc==="loadout"?"Vers le caveau":"Équiper"}</button><button class="btn sm danger" data-act="delcard" data-i="${i}">Supprimer</button></div></div>
   <div class="row r3">${fld("Nom","cards."+i+".name",x.name)}${fld("Type","cards."+i+".type",x.type)}${fld("Niveau","cards."+i+".level",x.level,"number","data-num")}${fld("Rappel","cards."+i+".recall",x.recall,"number","data-num")}</div>${area("Effet","cards."+i+".text",x.text,2)}</div>`;
- return `<div class="grid"><div class="col"><section class="box"><h2>Cartes équipées</h2><p class="small ${load>5?"warn":"muted"}">${load}/5 actives. Possédées : ${c.cards.length}, attendues : ${d.cards}. Sortir une carte de la réserve coûte son rappel en Stress, sauf au repos.</p>
+ return `<div class="grid"><div class="col"><section class="box"><h2>Cartes équipées</h2><p class="small ${load>5?"warn":"muted"}">${load}/5 actives. Possédées : ${c.cards.length}, attendues : ${d.cards}. Sortir une carte du caveau coûte son rappel en Stress, sauf au repos.</p>
  ${c.cards.map((x,i)=>x.loc==="loadout"?card(x,i):"").join("")||`<p class="muted">Aucune carte active.</p>`}
  <div class="row"><label class="f">Ajouter une carte de niveau 1<select id="addc"><option value="">Choisir…</option>${cl.dom.map(dm=>CARDS1[dm].map(cd=>`<option value="${dm}|${esc(cd[0])}">${dm} &middot; ${esc(cd[0])}</option>`).join("")).join("")}</select></label></div>
  <div class="flexgap" style="margin-top:8px"><button class="btn pri" data-act="addcard">Ajouter</button><button class="btn" data-act="addblank">Carte vierge (niveau supérieur)</button></div></section></div>
- <div class="col"><section class="box"><h2>Réserve</h2>${c.cards.map((x,i)=>x.loc==="vault"?card(x,i):"").join("")||`<p class="small muted">Cartes inactives.</p>`}</section></div></div>`}
+ <div class="col"><section class="box"><h2>Caveau</h2>${c.cards.map((x,i)=>x.loc==="vault"?card(x,i):"").join("")||`<p class="small muted">Cartes inactives.</p>`}</section></div></div>`}
 function sProg(c,d){let rows="";for(let l=2;l<=10;l++){const a=c.adv[l]||["",""],t=tier(l),locked=l>c.level,both=a.includes("prof")||a.includes("multi"),bad=a.some(x=>(x==="sub"||x==="multi")&&t<3);
- rows+=`<div class="adv" style="${locked?"opacity:.45":""}"><b>Niv. ${l}</b><select data-adv="${l}" data-k="0" ${locked?"disabled":""} aria-label="Niveau ${l} choix 1">${optsObj(ADVOPT,a[0]||"",v=>v)}</select><select data-adv="${l}" data-k="1" ${locked||both?"disabled":""} aria-label="Niveau ${l} choix 2">${optsObj(ADVOPT,both?"":(a[1]||""),v=>v)}</select></div>${bad?`<p class="warn">Niveau ${l} : option réservée au tier 3 et plus.</p>`:""}${[2,5,8].includes(l)&&!locked?`<p class="okc small">Palier : +1 Maîtrise, nouvelle Expérience à +2${l>2?", traits marqués effacés":""}.</p>`:""}`}
+ rows+=`<div class="adv" style="${locked?"opacity:.45":""}"><b>Niv. ${l}</b><select data-adv="${l}" data-k="0" ${locked?"disabled":""} aria-label="Niveau ${l} choix 1">${optsObj(ADVOPT,a[0]||"",v=>v)}</select><select data-adv="${l}" data-k="1" ${locked||both?"disabled":""} aria-label="Niveau ${l} choix 2">${optsObj(ADVOPT,both?"":(a[1]||""),v=>v)}</select></div>${bad?`<p class="warn">Niveau ${l} : option réservée au tier 3 et plus.</p>`:""}${[2,5,8].includes(l)&&!locked?`<p class="okc small">Palier : +1 Compétence, nouvelle Expérience à +2${l>2?", traits marqués effacés":""}.</p>`:""}`}
  return `<div class="grid"><div class="col"><section class="box"><h2>Montée de niveau</h2><p class="small muted">Chaque niveau : 2 améliorations, +1 à tous les seuils (automatique) et une nouvelle carte de domaine de votre niveau ou inférieur.</p>
  <div class="flexgap" style="margin-bottom:14px"><button class="btn pri" data-act="levelup" ${c.level>=10?"disabled":""}>Passer au niveau ${Math.min(10,c.level+1)}</button>${c.level>1?`<button class="btn sm" data-act="leveldown">Revenir au niveau ${c.level-1}</button>`:""}</div>${rows}</section></div>
- <div class="col"><section class="box"><h2>Récapitulatif</h2><div class="stats">${[["Tier",d.tier],["Maîtrise",d.prof],["PV max",d.hp],["Stress max",d.st],["Évasion",d.ev],["Cartes",d.cards],["Expériences",d.exps],["Seuils",d.major+"/"+d.severe]].map(([a,b])=>`<div class="stat"><small>${a}</small><strong>${b}</strong></div>`).join("")}</div>
+ <div class="col"><section class="box"><h2>Récapitulatif</h2><div class="stats">${[["Rang",d.tier],["Compétence",d.prof],["PV max",d.hp],["Stress max",d.st],["Esquive",d.ev],["Cartes",d.cards],["Expériences",d.exps],["Seuils",d.major+"/"+d.severe]].map(([a,b])=>`<div class="stat"><small>${a}</small><strong>${b}</strong></div>`).join("")}</div>
  <p class="small" style="margin-top:10px">« +1 à deux traits » et « +1 à deux Expériences » se reportent à la main dans l’onglet Fiche. Cochez « marqué » sur les traits améliorés.</p></section></div></div>`}
 function sHist(c){const cl=CLASSES[c.classe];return `<div class="grid"><div class="col"><section class="box"><h2>Portrait</h2><div style="max-width:220px" class="portrait">${portrait(c)}</div><div class="flexgap" style="margin-top:10px"><label class="btn sm">Changer l’image<input type="file" accept="image/*" data-upload hidden></label>${c.photo?`<button class="btn sm danger" data-act="nophoto">Retirer</button>`:""}</div></section>
  <section class="box"><h2>Apparence</h2>${storyBtns()}${area("Description","bg.look",c.bg.look,4)}</section>
@@ -1133,7 +1137,7 @@ async function download(name,obj){let dl=null;try{dl=window.claude&&claude.use?a
  if(!dl){saveBlob(name,new Blob([data],{type:"application/json"}));toast("Fichier enregistré.");return}
  try{await dl.save({filename:name,data});toast("Fichier enregistré.")}catch(e){toast(e&&e.code==="declined"?"Téléchargement annulé.":"Le téléchargement n’a pas abouti.")}}
 function importData(txt){try{let x=JSON.parse(txt);if(x&&x.chars)x=x.chars;x=Array.isArray(x)?x:[x];let n=0;
- x.forEach(o=>{if(!o||!o.classe)return;const c=Object.assign(blank(),o,{id:uid(),owner:L.me.id,example:false,photo:typeof o.photo==="string"&&o.photo.startsWith("data:image/")?o.photo:""});L.chars.push(c);saveChar(c);n++});
+ x.forEach(o=>{if(!o||!o.classe)return;const c=Object.assign(blank(),normChar(o),{id:uid(),owner:L.me.id,example:false,photo:typeof o.photo==="string"&&o.photo.startsWith("data:image/")?o.photo:""});L.chars.push(c);saveChar(c);n++});
  if(!n)throw 0;toast(n+" personnage"+(n>1?"s":"")+" importé"+(n>1?"s":"")+".");L.view="home";render()}catch(e){const r=document.getElementById("impres");if(r){r.className="warn small";r.textContent="Fichier ou texte invalide."}}}
 
 /* =================== VUE MJ =================== */
@@ -1144,17 +1148,17 @@ function renderGM(){if(!L.me.canEdit)return `<div class="note fear">L’espace M
 function pendingFear(){const t=L.table,cnt=t.counted||{};let n=0;L.chars.forEach(c=>(c.rolls||[]).forEach(r=>{if(r.fear&&r.ts&&r.ts>(cnt[c.id]||0))n++}));return n}
 function gTable(){const t=L.table;const pf=L.mode==="db"?pendingFear():0;
  return `<div class="grid"><div class="col"><section class="box"><h2>Peur : ${t.fear||0}/12</h2><div class="fearbig">${Array.from({length:12},(_,i)=>`<button class="slot ${i<(t.fear||0)?"on":""}" style="--c:var(--fear)" data-fear="${i}" aria-label="Peur ${i+1}"></button>`).join("")}</div>
- <div class="flexgap" style="margin-top:10px"><button class="btn sm" data-act="fear" data-k="-1">−1</button><button class="btn sm fear" data-act="fear" data-k="1">+1</button><button class="btn sm" data-act="fearrest" data-k="short">Repos court des PJ (+1d4)</button><button class="btn sm" data-act="fearrest" data-k="long">Repos long (+1d4 + nb PJ)</button></div>${pf?`<div class="note fear" style="margin-top:10px"><div class="flexgap" style="justify-content:space-between"><span><b>${pf}</b> jet${pf>1?"s":""} de joueur avec Peur pas encore compté${pf>1?"s":""}.</span><button class="btn sm fear" data-act="countfear">Ajouter ${pf} Peur</button></div></div>`:""}<label class="small flexgap" style="margin-top:10px"><input type="checkbox" data-tp="hideHp" ${t.hideHp?"checked":""} style="width:auto"> Masquer les PV du groupe aux joueurs</label><p class="small muted" id="fearres" style="margin-top:6px">Visible par les joueurs. La Peur se gagne quand un PJ obtient un résultat avec Peur.</p></section>
+ <div class="flexgap" style="margin-top:10px"><button class="btn sm" data-act="fear" data-k="-1">−1</button><button class="btn sm fear" data-act="fear" data-k="1">+1</button><button class="btn sm" data-act="fearrest" data-k="short">Court repos des PJ (+1d4)</button><button class="btn sm" data-act="fearrest" data-k="long">Long repos (+1d4 + nb PJ)</button></div>${pf?`<div class="note fear" style="margin-top:10px"><div class="flexgap" style="justify-content:space-between"><span><b>${pf}</b> jet${pf>1?"s":""} de joueur avec Peur pas encore compté${pf>1?"s":""}.</span><button class="btn sm fear" data-act="countfear">Ajouter ${pf} Peur</button></div></div>`:""}<label class="small flexgap" style="margin-top:10px"><input type="checkbox" data-tp="hideHp" ${t.hideHp?"checked":""} style="width:auto"> Masquer les PV du groupe aux joueurs</label><p class="small muted" id="fearres" style="margin-top:6px">Visible par les joueurs. La Peur se gagne quand un PJ obtient un résultat avec Peur.</p></section>
  <section class="box"><h2>Comptes à rebours</h2>${(t.cds||[]).map((x,i)=>`<div class="cd"><div style="min-width:0"><input data-tp="cds.${i}.name" value="${esc(x.name)}" aria-label="Nom"><div class="flexgap" style="margin-top:6px"><div class="slots">${Array.from({length:x.max},(_,j)=>`<button class="slot ${j<x.v?"on":""}" style="--c:var(--hope)" data-cd="${i}" data-i="${j}" aria-label="Case ${j+1}"></button>`).join("")}</div></div></div>
   <div class="flexgap" style="flex-direction:column"><label class="small flexgap"><input type="checkbox" data-tp="cds.${i}.pub" ${x.pub?"checked":""} style="width:auto">Public</label><button class="btn sm danger" data-act="delcd" data-i="${i}">✕</button></div></div>`).join("")||`<p class="small muted">Aucun compte à rebours.</p>`}
  <div class="flexgap"><input id="cdname" placeholder="Ex. : Le rituel s’achève" style="flex:1 1 180px"><input id="cdmax" type="number" value="6" min="1" max="12" style="width:70px" aria-label="Taille"><button class="btn sm" data-act="addcd">Ajouter</button></div></section></div>
- <div class="col"><section class="box"><h2>Personnages joueurs</h2>${L.chars.length?L.chars.map(c=>{const d=derive(c);if(!d)return"";return `<div class="item"><div class="itemhead"><b style="font:700 1.15rem var(--f-display)">${esc(c.name||"Sans nom")}</b><div class="flexgap"><button class="btn sm" data-act="pdfof" data-k="${esc(c.id)}">PDF</button>${SRV.on&&c.owner&&c.owner!==L.me.id?`<span class="small muted">Joueur : ${esc(c.owner.slice(2))}</span><button class="btn sm" data-act="resetpin" data-k="${esc(c.owner.slice(2))}">Code provisoire</button>`:""}<button class="btn sm" data-open="${c.id}">Fiche</button></div></div>${(c.effects||[]).filter(e=>e.on).length?`<div class="flexgap">${c.effects.filter(e=>e.on).map(e=>`<span class="chip" style="color:${+e.val<0||+e.adv<0?"var(--hp)":"var(--ok)"}">${esc(e.name)} ${effLabel(e)}</span>`).join("")}</div>`:""}<span class="small muted">${CLASSES[c.classe].n} ${c.level} &middot; Évasion ${d.ev} &middot; Seuils ${d.major}/${d.severe} &middot; Armure ${c.armorUsed}/${d.armor}</span>${bars(c)}</div>`}).join(""):`<p class="small muted">Aucun personnage à la table.</p>`}</section></div></div>`}
+ <div class="col"><section class="box"><h2>Personnages joueurs</h2>${L.chars.length?L.chars.map(c=>{const d=derive(c);if(!d)return"";return `<div class="item"><div class="itemhead"><b style="font:700 1.15rem var(--f-display)">${esc(c.name||"Sans nom")}</b><div class="flexgap"><button class="btn sm" data-act="pdfof" data-k="${esc(c.id)}">PDF</button>${SRV.on&&c.owner&&c.owner!==L.me.id?`<span class="small muted">Joueur : ${esc(c.owner.slice(2))}</span><button class="btn sm" data-act="resetpin" data-k="${esc(c.owner.slice(2))}">Code provisoire</button>`:""}<button class="btn sm" data-open="${c.id}">Fiche</button></div></div>${(c.effects||[]).filter(e=>e.on).length?`<div class="flexgap">${c.effects.filter(e=>e.on).map(e=>`<span class="chip" style="color:${+e.val<0||+e.adv<0?"var(--hp)":"var(--ok)"}">${esc(e.name)} ${effLabel(e)}</span>`).join("")}</div>`:""}<span class="small muted">${CLASSES[c.classe].n} ${c.level} &middot; Esquive ${d.ev} &middot; Seuils ${d.major}/${d.severe} &middot; Armure ${c.armorUsed}/${d.armor}</span>${bars(c)}</div>`}).join(""):`<p class="small muted">Aucun personnage à la table.</p>`}</section></div></div>`}
 function gEnc(){const t=L.table,base=3*(+t.pcs||4)+2+(+t.adj||0);const spent=(t.adv||[]).reduce((s,a)=>s+(ADVTYPES[a.type]?.[1]||0),0);
  return `<div class="grid"><div class="col"><section class="box"><h2>Budget de rencontre</h2><p class="small muted">Points de bataille = 3 x nombre de PJ + 2, puis ajustements.</p>
  <div class="row r3"><label class="f">Nombre de PJ<input type="number" data-tp="pcs" data-num value="${t.pcs||4}" data-r="all"></label><label class="f">Ajustement<select data-tp="adj" data-num data-r="all">${[[0,"Aucun"],[-1,"−1 combat plus facile ou court"],[-2,"−2 deux Solos ou plus"],[1,"+1 adversaire de tier inférieur"],[2,"+2 combat plus dur, dégâts +1d4"]].map(([v,n])=>`<option value="${v}" ${+t.adj===v?"selected":""}>${n}</option>`).join("")}</select></label></div>
  <p class="result" style="margin:12px 0;color:${spent>base?"var(--hp)":"var(--ok)"}">${spent} / ${base} points dépensés</p>
  <table class="t"><thead><tr><th>Type</th><th>Coût</th></tr></thead><tbody>${Object.values(ADVTYPES).map(v=>`<tr><td>${v[0]}</td><td>${v[1]}</td></tr>`).join("")}</tbody></table></section>
- <section class="box"><h2>Ajouter un adversaire</h2><div class="row r3"><label class="f">Nom<input id="an" placeholder="Ex. : Bandit des gorges"></label><label class="f">Type<select id="at">${optsObj(ADVTYPES,"standard",v=>v[0])}</select></label><label class="f">Tier<select id="atier">${[1,2,3,4].map(x=>`<option>${x}</option>`).join("")}</select></label><label class="f">Nombre<input id="anb" type="number" value="1" min="1" max="10"></label></div>
+ <section class="box"><h2>Ajouter un adversaire</h2><div class="row r3"><label class="f">Nom<input id="an" placeholder="Ex. : Bandit des gorges"></label><label class="f">Type<select id="at">${optsObj(ADVTYPES,"standard",v=>v[0])}</select></label><label class="f">Rang<select id="atier">${[1,2,3,4].map(x=>`<option>${x}</option>`).join("")}</select></label><label class="f">Nombre<input id="anb" type="number" value="1" min="1" max="10"></label></div>
  <p class="small muted" style="margin-top:8px">Les statistiques sont pré-remplies avec des repères moyens par tier. Ajustez-les selon votre bestiaire.</p><button class="btn pri" data-act="addadv">Ajouter</button></section></div>
  <div class="col"><section class="box"><h2>Adversaires en jeu</h2>${(t.adv||[]).map((a,i)=>`<div class="item"><div class="itemhead"><input data-tp="adv.${i}.name" value="${esc(a.name)}" style="max-width:220px" aria-label="Nom"><span class="chip">${ADVTYPES[a.type]?.[0]||a.type}</span><button class="btn sm danger" data-act="deladv" data-i="${i}">✕</button></div>
   <div class="row r3">${["diff:Difficulté","maj:Majeurs","sev:Graves","atk:Attaque"].map(s=>{const[k,n]=s.split(":");return `<label class="f">${n}<input type="number" data-tp="adv.${i}.${k}" data-num value="${a[k]}"></label>`}).join("")}<label class="f">Dégâts<input data-tp="adv.${i}.dmg" value="${esc(a.dmg)}"></label></div>
@@ -1168,13 +1172,13 @@ function gRules(){return `<div class="grid ref"><div class="col"><section class=
  <ul><li><b>Critique</b> (dés égaux) : succès, le PJ gagne 1 Espoir et retire 1 Stress.</li><li><b>Succès avec Espoir</b> : réussite, le PJ gagne 1 Espoir.</li><li><b>Succès avec Peur</b> : réussite avec une complication, le MJ gagne 1 Peur.</li><li><b>Échec avec Espoir</b> : échec avec conséquence légère, le PJ gagne 1 Espoir.</li><li><b>Échec avec Peur</b> : échec, le MJ gagne 1 Peur et prend la main.</li></ul>
  <h3>Difficultés</h3><p>5 très facile &middot; 10 facile &middot; 15 moyen &middot; 20 difficile &middot; 25 très difficile &middot; 30 quasi impossible.</p>
  <h3>Portées</h3><p>Mêlée &middot; Très proche &middot; Proche &middot; Lointaine &middot; Très lointaine &middot; Hors de portée.</p>
- <h3>Conditions</h3><ul><li><b>Caché</b> : hors de vue, les jets contre vous ont le désavantage.</li><li><b>Entravé</b> : vous ne pouvez pas vous déplacer.</li><li><b>Vulnérable</b> : les jets contre vous ont l’avantage.</li></ul>
+ <h3>Conditions</h3><ul><li><b>Caché</b> : hors de vue, les jets contre vous ont le désavantage.</li><li><b>Bloqué</b> : vous ne pouvez pas vous déplacer.</li><li><b>Vulnérable</b> : les jets contre vous ont l’avantage.</li></ul>
  <h3>Avantage et désavantage</h3><p>Ajoutez ou retirez 1d6. Ils s’annulent un pour un.</p></section>
  <section class="box"><h2>Dégâts</h2><ul><li>Sous le seuil Majeur : 1 PV.</li><li>Majeur : 2 PV. Grave : 3 PV.</li><li>Une case d’armure réduit d’un cran.</li><li>Résistance : dégâts divisés par deux. Immunité : aucun.</li><li>Règle optionnelle : dégâts supérieurs ou égaux au double du seuil Grave = 4 PV.</li><li>Stress plein : chaque Stress de plus devient 1 PV.</li></ul></section></div>
- <div class="col"><section class="box"><h2>Peur du MJ</h2><ul><li>Maximum 12. Commence la session avec la Peur restante.</li><li>Gain : chaque résultat avec Peur d’un PJ, +1d4 au repos court des PJ, +1d4 + nombre de PJ au repos long.</li><li>Dépense : interrompre pour faire un geste, activer une capacité de Peur d’adversaire, donner le projecteur à un adversaire supplémentaire.</li></ul></section>
+ <div class="col"><section class="box"><h2>Peur du MJ</h2><ul><li>Maximum 12. Commence la session avec la Peur restante.</li><li>Gain : chaque résultat avec Peur d’un PJ, +1d4 au court repos des PJ, +1d4 + nombre de PJ au long repos.</li><li>Dépense : interrompre pour faire un geste, activer une capacité de Peur d’adversaire, donner le projecteur à un adversaire supplémentaire.</li></ul></section>
  <section class="box"><h2>Gestes de mort</h2><ul><li><b>Éclat de gloire</b> : une dernière action en réussite critique, puis le personnage meurt.</li><li><b>Éviter la mort</b> : inconscient, puis lancez le Dé d’Espoir. Si le résultat est inférieur ou égal au niveau, le PJ gagne une cicatrice (barrez une case d’Espoir).</li><li><b>Risquer le tout</b> : Dés de dualité. Espoir plus haut : le PJ survit et retire PV ou Stress égaux au Dé d’Espoir. Peur plus haut : il meurt. Critique : il retire tout.</li></ul></section>
- <section class="box"><h2>Repos</h2><p>Deux actions par repos. Court : soigner 1d4 + tier PV, retirer 1d4 + tier Stress, réparer 1d4 + tier armure, préparer (+1 Espoir, +2 si à plusieurs). Long : versions complètes, plus travailler sur un projet. Un 3e repos court d’affilée devient un repos long.</p></section>
- <section class="box"><h2>Montée de niveau</h2><p>Paliers aux niveaux 2, 5 et 8 : +1 Maîtrise, nouvelle Expérience, traits marqués effacés (5 et 8). Chaque niveau : 2 améliorations, +1 aux seuils, 1 carte de domaine.</p></section></div></div>`}
+ <section class="box"><h2>Repos</h2><p>Deux actions par repos. Court : soigner 1d4 + tier PV, retirer 1d4 + tier Stress, réparer 1d4 + tier armure, préparer (+1 Espoir, +2 si à plusieurs). Long : versions complètes, plus travailler sur un projet. Un 3e court repos d’affilée devient un long repos.</p></section>
+ <section class="box"><h2>Montée de niveau</h2><p>Paliers aux niveaux 2, 5 et 8 : +1 Compétence, nouvelle Expérience, traits marqués effacés (5 et 8). Chaque niveau : 2 améliorations, +1 aux seuils, 1 carte de domaine.</p></section></div></div>`}
 function gNotes(){return `<section class="box"><h2>Notes privées du MJ</h2><p class="small muted">${L.mode==="db"?"Visibles par vous seul.":"Enregistrées dans ce navigateur."}</p><textarea data-gm rows="18">${esc(L.gm)}</textarea></section>`}
 
 /* =================== RENDU GLOBAL =================== */
@@ -1319,10 +1323,10 @@ document.addEventListener("click",e=>{
   case "addcard":{const v=document.getElementById("addc").value;if(!v)return;const[dm,n]=v.split("|");const cd=mkCard(dm,CARDS1[dm].find(x=>x[0]===n));cd.loc=c.cards.filter(x=>x.loc==="loadout").length<5?"loadout":"vault";c.cards.push(cd);break}
   case "addblank":c.cards.push({id:uid(),name:"",domain:CLASSES[c.classe].dom[0],level:c.level,type:"",recall:0,text:"",loc:c.cards.filter(x=>x.loc==="loadout").length<5?"loadout":"vault"});break;
   case "delcard":c.cards.splice(i,1);break;
-  case "movecard":{const x=c.cards[i];if(x.loc==="vault"&&c.cards.filter(y=>y.loc==="loadout").length>=5){toast("5 cartes maximum équipées. Mettez-en une en réserve d’abord.");return}x.loc=x.loc==="loadout"?"vault":"loadout";break}
+  case "movecard":{const x=c.cards[i];if(x.loc==="vault"&&c.cards.filter(y=>y.loc==="loadout").length>=5){toast("5 cartes maximum équipées. Mettez-en une au caveau d’abord.");return}x.loc=x.loc==="loadout"?"vault":"loadout";break}
   case "rest":{const k=b.dataset.k,r=dn(4)+D.tier;c[k]=Math.max(0,c[k]-r);persist();render();const z=document.getElementById("restres");if(z)z.textContent="Résultat : "+r+" retiré"+(r>1?"s":"")+".";return}
   case "longrest":c.hp=0;c.stress=0;c.armorUsed=0;expire(c,"long");break;
-  case "lr":c[b.dataset.k]=0;toast("Fait. Une action de repos long utilisée.");break;
+  case "lr":c[b.dataset.k]=0;toast("Fait. Une action de long repos utilisée.");break;
   case "prepare":c.hope=Math.min(D.hopeMax,c.hope+1);toast("+1 Espoir.");break;
   case "endrest":{const n=expire(c,b.dataset.k);toast("Repos terminé"+(n?", "+n+" effet"+(n>1?"s":"")+" expiré"+(n>1?"s":""):"")+".");break}
   case "scar":c.scars=Math.max(0,Math.min(6,(+c.scars||0)+ +b.dataset.k));c.hope=Math.min(c.hope,6-c.scars);break;
