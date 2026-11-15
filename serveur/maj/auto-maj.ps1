@@ -11,17 +11,14 @@ $files = @(@{ n = 'server.js'; d = 'server.js' }, @{ n = 'index.html'; d = 'publ
 $tmp = Join-Path $env:TEMP ('dh-maj-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Force $tmp | Out-Null
 try {
+  # Le script se met lui-meme a jour pour la prochaine execution
+  try { $self = Join-Path $tmp 'auto-maj.ps1'; Invoke-WebRequest "$raw/auto-maj.ps1?t=$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())" -OutFile $self -UseBasicParsing -TimeoutSec 60
+    if ((Select-String -Path $self -Pattern 'auto-maj' -Quiet) -and (Get-FileHash $self).Hash -ne (Get-FileHash $PSCommandPath).Hash) { Copy-Item $self $PSCommandPath -Force; Log 'Script de mise a jour automatique mis a jour.' } } catch {}
   foreach ($f in $files) { Invoke-WebRequest "$raw/$($f.n)?t=$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())" -OutFile (Join-Path $tmp $f.n) -UseBasicParsing -TimeoutSec 60 }
   $changed = $files | Where-Object { -not (Test-Path (Join-Path $dir $_.d)) -or (Get-FileHash (Join-Path $tmp $_.n)).Hash -ne (Get-FileHash (Join-Path $dir $_.d)).Hash }
   if (-not $changed) { return }
-  # Pas de redemarrage pendant une partie : on attend que plus personne ne soit connecte (au plus 24 h)
+  # Installation immediate, meme si des joueurs sont connectes : leur page se recharge toute seule apres la mise a jour.
   $wait = Join-Path $dir 'maj-en-attente.txt'
-  try { $st = Invoke-RestMethod 'http://localhost:8090/api/local/status' -TimeoutSec 5 } catch { $st = $null }
-  if ($st -and $st.online -gt 0) {
-    if (-not (Test-Path $wait)) { Set-Content $wait (Get-Date -Format o); Log ("Mise a jour disponible, reportee : " + $st.online + " joueur(s) connecte(s).") }
-    if (((Get-Date) - [datetime](Get-Content $wait -Raw).Trim()).TotalHours -lt 24) { return }
-    Log 'Mise a jour en attente depuis 24 h : installation malgre les joueurs connectes.'
-  }
   Remove-Item $wait -Force -ErrorAction SilentlyContinue
   & (Join-Path $dir 'node\node.exe') --check (Join-Path $tmp 'server.js'); if ($LASTEXITCODE -ne 0) { Log 'Nouvelle version refusee : server.js invalide.'; return }
   foreach ($h in 'index.html', 'admin.html') { if (-not (Select-String -Path (Join-Path $tmp $h) -Pattern '</html>' -Quiet)) { Log "Nouvelle version refusee : $h incomplet."; return } }
