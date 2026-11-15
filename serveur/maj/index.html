@@ -215,6 +215,87 @@ table.t tr.sel{background:var(--hope-soft)}
 .party.open .pm-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
 .pm-alert{font-size:.72rem;font-weight:700;color:var(--hp)}
 </style>
+<style id="refonte">
+/* Refonte : thème Nuit retravaillé, thème Parchemin, navigation adaptée au téléphone, à la tablette et au PC */
+:root{--bg:#0f0c18;--panel:#1a1528;--panel2:#231c36;--panel3:#2a2140;--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.15);--fg:#ece7f5;--muted:#a79fbd;--gold:#e8c36a;--gold2:#f0d48c;--hope:#e8c36a;--fear:#a77bff;--fear-soft:rgba(167,123,255,.14);--hp:#ef6b5b;--stress:#4cc3c9;--head:#15111f;--inbg:rgba(8,6,15,.45);--navbg:rgba(21,17,31,.94);--chip:#231c36;--ongold:#1a1208}
+:root[data-theme=parchemin]{color-scheme:light;--bg:#f4eee2;--panel:#fffbf3;--panel2:#f6efe1;--panel3:#efe5d2;--line:#e3d9c6;--line2:#d2c4a8;--fg:#231d2e;--muted:#5e5670;--gold:#9a6b12;--gold2:#7a520c;--hope:#c8961f;--hope-soft:rgba(200,150,31,.15);--fear:#6b3fc4;--fear-soft:rgba(107,63,196,.10);--hp:#c0412f;--stress:#1d7f86;--armor:#5e6680;--ok:#2e7d4f;--head:#fbf7ee;--head-fg:#231d2e;--inbg:#fffdf8;--navbg:rgba(251,247,238,.96);--chip:#f6efe1;--ongold:#ffffff}
+body{background:radial-gradient(900px 500px at 10% -12%,rgba(123,79,194,.16),transparent 60%),var(--bg)!important}
+:root[data-theme=parchemin] body{background:var(--bg)!important}
+.wrap{max-width:1360px}
+header.top{background:var(--head);border-bottom:1px solid var(--line)}
+section.box{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:none}
+section.box::before{display:none}
+input,select,textarea{background:var(--inbg);border-color:var(--line2)}
+label.f,h3,.tbar-l{font-family:var(--f-body)!important;letter-spacing:.05em!important;font-weight:700}
+nav.tabs{background:var(--navbg);border-color:var(--line)}
+nav.tabs button{font:700 .92rem var(--f-body)!important;letter-spacing:.01em!important;text-transform:none!important;min-height:40px}
+.btn{min-height:40px}
+.btn.pri,nav.tabs button.on,.roles button.on{color:var(--ongold)!important}
+:root[data-theme=parchemin] .btn,:root[data-theme=parchemin] .roles button,:root[data-theme=parchemin] .mode{background:#fffdf8}
+:root[data-theme=parchemin] .btn.pri,:root[data-theme=parchemin] nav.tabs button.on,:root[data-theme=parchemin] .roles button.on{background:var(--gold);border-color:var(--gold)}
+:root[data-theme=parchemin] .pm{background:var(--panel);border-color:var(--line)}
+:root[data-theme=parchemin] .pm-s,:root[data-theme=parchemin] .tbar-n{color:var(--fg)!important}
+:root[data-theme=parchemin] .tbar{background:var(--panel)}
+:root[data-theme=parchemin] .tbar-l{color:var(--fear)}
+@media (pointer:coarse){.btn{min-height:44px}.slot{width:36px;height:36px}}
+@media (max-width:700px){.grid{grid-template-columns:minmax(0,1fr)}}
+@media (min-width:701px){.grid{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr)}}
+/* Peur et groupe : bandeau compact */
+.tbar{padding:10px 14px;gap:8px;border-radius:16px;background:linear-gradient(180deg,var(--fear-soft),transparent),var(--panel);border-color:rgba(167,123,255,.35)}
+.fearpips span{height:10px}
+@media (max-width:720px){.party:not(.open){display:flex;overflow-x:auto;gap:8px;scrollbar-width:none}.party:not(.open) .pm{flex:none;width:132px}}
+/* Bandeau personnage : toujours visible */
+.vit{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;margin-bottom:12px;background:var(--navbg);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:16px}
+.vit .av{width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;font:700 1.15rem var(--f-display);color:#fff;flex:none}
+.vit .nm{font:700 1.15rem var(--f-display);margin-right:auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vit .ch{font:700 .85rem var(--f-body);padding:5px 10px;border-radius:999px;background:var(--chip);border:0;color:var(--fg);cursor:pointer;min-height:32px}
+.vit .ch.hp{color:var(--hp)}.vit .ch.st{color:var(--stress)}.vit .ch.ho{color:var(--hope)}.vit .ch.fe{color:var(--fear)}
+/* Lancer depuis un trait */
+.trait .troll{margin-top:4px;width:100%}
+/* Téléphone : barre de navigation en bas */
+.bnav,.bsheet,.bshade{display:none}
+@media (max-width:720px){
+ body.in-sheet nav.tabs{display:none}
+ body.in-sheet .vit{position:sticky;top:env(safe-area-inset-top,0px);z-index:6}
+ body.in-sheet .bnav{display:grid;position:fixed;left:0;right:0;bottom:0;z-index:30;grid-template-columns:repeat(5,minmax(0,1fr));align-items:end;padding:6px 6px calc(8px + env(safe-area-inset-bottom,0px));background:var(--navbg);backdrop-filter:blur(10px);border-top:1px solid var(--line)}
+ body.in-sheet main{padding-bottom:120px}
+ body.in-sheet .bshade.on{display:block;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:40}
+ body.in-sheet .bsheet.on{display:flex;flex-direction:column;gap:6px;position:fixed;left:0;right:0;bottom:0;z-index:41;background:var(--panel);border-radius:22px 22px 0 0;padding:10px 16px calc(18px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line2)}
+ header.top .brand small{display:none}
+ header.top .wrap{padding-block:10px}
+}
+.bnav button{border:0;background:transparent;color:var(--muted);min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font:600 .74rem var(--f-body);cursor:pointer;padding:0}
+.bnav button.on{color:var(--gold);font-weight:800}
+.bnav .fab{width:58px;height:58px;margin-top:-26px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;border:4px solid var(--bg);color:var(--ongold)}
+.bsheet .grab{width:44px;height:5px;border-radius:3px;background:var(--line2);align-self:center;margin-bottom:6px}
+.bsheet button{min-height:50px;border:0;border-radius:12px;background:var(--panel2);color:var(--fg);font:700 1rem var(--f-body);text-align:left;padding:0 16px;cursor:pointer}
+.bsheet button.on{background:var(--gold);color:var(--ongold)}
+/* Tablette : onglets visibles en entier */
+@media (min-width:721px) and (max-width:979px){nav.tabs{flex-wrap:wrap;border-radius:18px;overflow:visible}}
+/* PC : menu latéral à gauche, bandeau collant */
+@media (min-width:980px){
+ .sheetlay{display:grid;grid-template-columns:220px minmax(0,1fr);gap:20px;align-items:start}
+ .sheetlay>nav.tabs{flex-direction:column;align-items:stretch;border-radius:18px;position:sticky;top:14px;overflow:visible;margin:0;padding:8px}
+ .sheetlay>nav.tabs button{text-align:left;border-radius:12px;padding:11px 14px}
+ .sheetlay .vit{position:sticky;top:14px;z-index:6}
+}
+#thm{border:1px solid var(--line2);background:transparent;color:var(--muted);border-radius:999px;padding:7px 14px;font:700 .8rem var(--f-body);cursor:pointer;min-height:36px}
+
+/* Chiffres lisibles (Cinzel n'a que des chiffres en capitales romaines) */
+.trait input,.stat strong,.thresh .num,.tbar-n,.die,.result,.sumline b,.adv b,.stats strong{font-family:var(--f-body)!important;font-weight:800}
+@media (max-width:1100px){.traits{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:720px){
+ header.top .mode{display:none}
+ header.top .brand h1{font-size:1.05rem;letter-spacing:.08em}
+ header.top .brand .sigil{width:32px;height:32px}
+ header.top .wrap{flex-wrap:nowrap;gap:8px}
+ .roles button,#thm{padding:6px 10px;font-size:.72rem;min-height:36px}
+ body.in-sheet .tbar{padding:8px 10px;margin-bottom:10px}
+ body.in-sheet .tbar .tbar-h,body.in-sheet .tbar .fearpips,body.in-sheet .tbar .party-h{display:none}
+ body.in-sheet .tbar>p{display:none}
+}
+@media (max-width:420px){.vit .nm{display:none}.vit{justify-content:space-between}}
+</style>
 
 <header class="top"><div class="wrap">
  <div class="brand" data-act="home"><svg class="sigil" viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="14" width="20" height="20" rx="3" transform="rotate(45 16 24)" fill="none" stroke="#e8b84e" stroke-width="2"/><rect x="22" y="14" width="20" height="20" rx="3" transform="rotate(45 32 24)" fill="none" stroke="#b783ea" stroke-width="2"/><circle cx="24" cy="24" r="3" fill="#f3d394"/></svg><div><h1>Daggerheart</h1><small>Table de jeu, fiches et écran du MJ</small></div></div>
@@ -1021,19 +1102,34 @@ function wStory(c){const cl=CLASSES[c.classe];
  ${area("Connexions","bg.links",c.bg.links,3)}${area("Origines, secret et accroche","bg.notes",c.bg.notes,5)}</section>`}
 
 /* ---------- Fiche ---------- */
-const STABS=[["fiche","Fiche"],["recap","Récap jets"],["jets","Jets & dégâts"],["cartes","Cartes"],["equip","Équipement"],["prog","Progression"],["histoire","Histoire"]];
+const STABS=[["fiche","Fiche"],["recap","Récap jets"],["jets","Jets & dégâts"],["cartes","Cartes"],["equip","Équipement"],["inv","Inventaire"],["prog","Progression"],["histoire","Histoire"]];
+/* Thème : Auto (suit le téléphone), Nuit, Parchemin */
+const THEMES=["auto","nuit","parchemin"],THEME_N={auto:"Thème auto",nuit:"Thème Nuit",parchemin:"Thème Parchemin"};
+function themePref(){try{return localStorage.getItem("dh-theme")||"auto"}catch(e){return"auto"}}
+function applyTheme(){const p=themePref(),r=p==="auto"?(window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches?"parchemin":"nuit"):p;document.documentElement.dataset.theme=r;const b=document.getElementById("thm");if(b){b.textContent={auto:"Auto",nuit:"Nuit",parchemin:"Parchemin"}[p];b.setAttribute("aria-label",THEME_N[p]+" : changer");b.title=THEME_N[p]}}
+function cycleTheme(){const p=themePref(),n=THEMES[(THEMES.indexOf(p)+1)%3];try{localStorage.setItem("dh-theme",n)}catch(e){}applyTheme();toast(THEME_N[n]+(n==="auto"?" : suit le réglage de l’appareil":""))}
+try{matchMedia("(prefers-color-scheme: light)").addEventListener("change",applyTheme)}catch(e){}
+(function(){const r=document.querySelector("header.top .roles");if(r&&!document.getElementById("thm")){const b=document.createElement("button");b.id="thm";b.type="button";b.onclick=cycleTheme;r.appendChild(b)}applyTheme()})();
+const BNAV_IC={fiche:'<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>',cartes:'<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="7" height="12" rx="1.5"/><rect x="12" y="4" width="7" height="12" rx="1.5" transform="rotate(8 15 10)"/></svg>',jets:'<svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 21 7v10l-9 5-9-5V7Z"/><path d="M12 2v20M3 7l9 5 9-5"/></svg>',inv:'<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v9H3Z"/><path d="M3 12h18M10.5 10.5h3v3h-3Z"/></svg>',plus:'<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>'};
+function vitBar(c,d){const t=L.table||{},f=Math.max(0,Math.min(12,+t.fear||0));
+ return `<div class="vit"><span class="av" style="background:${esc(c.color||"#5b3a9e")}" aria-hidden="true">${esc(String(c.name||"?").trim().slice(0,1).toUpperCase())}</span><span class="nm">${esc(c.name||"Sans nom")}</span><button class="ch hp" data-tab="fiche">PV ${c.hp||0}/${d.hp}</button><button class="ch st" data-tab="fiche">Stress ${c.stress||0}/${d.st}</button><button class="ch ho" data-tab="fiche">Espoir ${c.hope||0}</button><span class="ch fe" role="img" aria-label="Peur du MJ ${f} sur 12">Peur ${f}</span></div>`}
+function bottomNav(){const more=["recap","equip","prog","histoire"].includes(L.tab);
+ const it=(k,n,cls)=>`<button class="${cls||""} ${L.tab===k?"on":""}" data-tab="${k}">${k==="jets"?`<span class="fab">${BNAV_IC.jets}</span>`:BNAV_IC[k]}${n}</button>`;
+ return `<nav class="bnav" aria-label="Navigation de la fiche">${it("fiche","Fiche")}${it("cartes","Cartes")}${it("jets","Lancer","roll")}${it("inv","Inventaire")}<button class="${more?"on":""}" data-act="more" aria-expanded="${!!L.more}">${BNAV_IC.plus}Plus</button></nav>
+ <div class="bshade ${L.more?"on":""}" data-act="more"></div><div class="bsheet ${L.more?"on":""}" role="dialog" aria-label="Plus d’options"><span class="grab"></span>${[["recap","Récap jets"],["equip","Équipement"],["prog","Progression"],["histoire","Histoire"]].map(([k,n])=>`<button class="${L.tab===k?"on":""}" data-tab="${k}">${n}</button>`).join("")}<button data-act="pdf">Fiche PDF</button><button type="button" onclick="cycleTheme()">Changer de thème</button><button data-act="home">← Retour à l’accueil</button></div>`}
+
 function renderSheet(){const c=T();if(!c){L.view="home";return renderHome()}
  const d=derive(c);const ro=!canWrite(c);
- const tab={fiche:sFiche,recap:sRecap,jets:sJets,cartes:sCartes,equip:(c,d)=>equipEditor(c)+sInv(c,d),prog:sProg,histoire:sHist}[L.tab]||sFiche;
- return `<nav class="tabs"><button data-act="home">← Retour</button>${STABS.map(([k,n])=>`<button class="${L.tab===k?"on":""}" data-tab="${k}">${n}</button>`).join("")}<button data-act="pdf" title="Télécharger la fiche complète en PDF, à jour">Fiche PDF</button></nav>
+ const tab={fiche:sFiche,recap:sRecap,jets:sJets,cartes:sCartes,equip:(c,d)=>equipEditor(c),inv:(c,d)=>sInv(c,d),prog:sProg,histoire:sHist}[L.tab]||sFiche;
+ return `<div class="sheetlay"><nav class="tabs"><button data-act="home">← Retour</button>${STABS.map(([k,n])=>`<button class="${L.tab===k?"on":""}" data-tab="${k}">${n}</button>`).join("")}<button data-act="pdf" title="Télécharger la fiche complète en PDF, à jour">Fiche PDF</button></nav><div class="sheetmain">${vitBar(c,d)}
  ${ro?`<div class="note fear" style="margin-bottom:12px">Lecture seule : ce personnage appartient à un autre joueur.</div>`:""}
- <fieldset ${ro?"disabled":""}>${tab(c,d)}</fieldset>`}
+ <fieldset ${ro?"disabled":""}>${tab(c,d)}</fieldset></div></div>${bottomNav()}`}
 function sFiche(c,d){const cl=CLASSES[c.classe],sb=cl.subs[c.sub],a1=ANC[c.anc1].f[0],a2=ANC[c.anc2||c.anc1].f[1],cm=COMM[c.comm];
  return `${c.example?`<div class="note" style="margin-bottom:12px">Fiche d’exemple. Modifiez-la ou créez votre propre personnage. <button class="btn sm" data-act="unexample">Masquer</button></div>`:""}
  <div class="grid"><div class="col">
  <section class="box"><div style="display:grid;grid-template-columns:110px minmax(0,1fr);gap:14px;align-items:center"><div class="portrait">${portrait(c)}</div>
   <div style="min-width:0">${fld("Nom","name",c.name)}<p class="small muted" style="margin:6px 0 0">${cl.n} &middot; ${sb.n} &middot; ${ANC[c.anc1].n}${c.anc2&&c.anc2!==c.anc1?" / "+ANC[c.anc2].n:""} &middot; ${cm.n}<br>Niveau ${c.level} &middot; Rang ${d.tier} &middot; Incantation : <b>${sb.sc||"aucune"}</b> &middot; ${cl.dom.map(x=>`<b style="color:${DOMCOL[x]}">${x}</b>`).join(" &amp; ")}</p></div></div></section>
- <section class="box"><h2>Traits</h2><div class="traits">${TRAITS.map(([k,n,v])=>`<div class="trait"><b>${n}</b><input type="number" min="-3" max="8" data-p="traits.${k}.v" data-num value="${c.traits[k].v??0}" aria-label="${n}">${d.tr[k]!==+(c.traits[k].v??0)?`<span class="warn" style="font-size:.72rem">effectif ${sign(d.tr[k])}</span>`:""}<span class="verbs">${v}</span><label><input type="checkbox" data-p="traits.${k}.m" ${c.traits[k].m?"checked":""}>marqué</label></div>`).join("")}</div></section>
+ <section class="box"><h2>Traits</h2><div class="traits">${TRAITS.map(([k,n,v])=>`<div class="trait"><b>${n}</b><input type="number" min="-3" max="8" data-p="traits.${k}.v" data-num value="${c.traits[k].v??0}" aria-label="${n}">${d.tr[k]!==+(c.traits[k].v??0)?`<span class="warn" style="font-size:.72rem">effectif ${sign(d.tr[k])}</span>`:""}<span class="verbs">${v}</span><button type="button" class="btn sm troll" data-act="quickroll" data-k="${k}">Lancer</button><label><input type="checkbox" data-p="traits.${k}.m" ${c.traits[k].m?"checked":""}>marqué</label></div>`).join("")}</div></section>
  <section class="box"><h2>Défense</h2><div class="stats"><div class="stat"><small>Esquive</small><strong>${d.ev}</strong></div><div class="stat"><small>Armure</small><strong>${d.armor}</strong></div><div class="stat"><small>Compétence</small><strong>${d.prof}</strong></div><div class="stat"><small>Niveau</small><strong>${c.level}</strong></div></div>
   <h3>Seuils de dégâts</h3><div class="thresh"><span class="seg">Mineurs &middot; 1 PV</span><span class="num">${d.major}</span><span class="seg">Majeurs &middot; 2 PV</span><span class="num">${d.severe}</span><span class="seg">Graves &middot; 3 PV</span></div>
   <h3>Armes</h3>${[c.prim,c.sec].filter(Boolean).map(w=>`<p class="small"><b>${esc(w.n)}</b> &middot; ${w.t} ${sign(d.tr[TK[w.t]]??0)} &middot; ${w.r} &middot; <b>${d.prof}${w.d}</b> ${w.dt}${w.f?` &middot; <span class="muted">${esc(w.f)}</span>`:""}</p>`).join("")||`<p class="small muted">Aucune arme.</p>`}
@@ -1272,7 +1368,7 @@ function render(){if(SRV.on&&SRV.login){document.getElementById("main").innerHTM
  document.getElementById("mode").textContent=L.mode==="db"?"Table partagée":(SRV.on?"Serveur":"Mode local");
  let h;if(L.role==="mj"&&L.view!=="sheet")h=renderGM();else if(L.view==="wizard"&&L.wiz)h=renderWizard();else if(L.view==="sheet")h=renderSheet();else h=renderHome();
  if(L.role!=="mj")h=renderTableBar()+h;
- document.getElementById("main").innerHTML=h;saveLocal();
+ document.body.classList.toggle("in-sheet",L.view==="sheet"&&!(L.role==="mj"&&L.view!=="sheet"));document.getElementById("main").innerHTML=h;saveLocal();
 }
 
 /* =================== INTERACTIONS =================== */
@@ -1303,7 +1399,7 @@ document.addEventListener("click",e=>{
  const b=e.target.closest("button,[data-act]");if(!b)return;if(b.tagName==="A")e.preventDefault();
  if(b.dataset.role){if(b.dataset.role==="mj"&&!L.me.canEdit){toast(SRV.on?"Connectez-vous avec le code MJ pour ouvrir l’espace MJ.":"L’espace MJ est réservé au propriétaire de la page.");return}L.role=b.dataset.role;if(L.view==="sheet"&&L.role==="mj")L.view="home";render();return}
  if(b.dataset.open){L.cur=b.dataset.open;L.view="sheet";L.tab="fiche";render();scrollTo({top:0});return}
- if(b.dataset.tab){L.tab=b.dataset.tab;render();return}
+ if(b.dataset.tab){L.tab=b.dataset.tab;L.more=false;render();window.scrollTo({top:0});return}
  if(b.dataset.dice){L.dice=b.dataset.dice;saveLocal();render();return}
  if(b.dataset.gtab){L.gtab=b.dataset.gtab;if(L.gtab==="admin")admLoad();render();return}
  if(b.dataset.step){L.wiz.step=+b.dataset.step;render();scrollTo({top:0});return}
@@ -1344,6 +1440,8 @@ document.addEventListener("click",e=>{
    api("POST","api/admin/reset?name="+encodeURIComponent(b.dataset.k),{}).then(j=>{ADM.temp={name:b.dataset.k,code:j.temp};L.gtab="admin";admLoad();render()},e=>toast(e.message||"Échec."));return}
   case "copyurl":{try{navigator.clipboard.writeText(SRV.publicUrl).then(()=>toast("Adresse copiée."),()=>toast(SRV.publicUrl))}catch(e){toast(SRV.publicUrl)}return}
   case "srvlogout":srvLogout();return;
+  case "more":L.more=!L.more;render();return;
+  case "quickroll":{const k=b.dataset.k;L.more=false;L.tab="jets";render();const sel=document.getElementById("r-trait");if(sel){sel.value=k;const rb=main.querySelector('[data-act="roll"]');if(rb)rb.click()}const dz=document.getElementById("dice");if(dz)dz.scrollIntoView({block:"center",behavior:"smooth"});return}
   case "home":L.view="home";if(L.role==="mj"&&!b.closest("nav"))L.role=L.role;break;
   case "newwiz":L.wiz={step:0,d:blank()};L.view="wizard";L.role="joueur";break;
   case "resume":L.view="wizard";L.role="joueur";break;
