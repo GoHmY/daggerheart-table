@@ -184,14 +184,46 @@ function clientIp(req) {
   return (r === "127.0.0.1" || r === "::1") && cf ? String(cf).slice(0, 45) : r;
 }
 
-/* ---------- Adresse publique du tunnel (lue dans data/tunnel.log) ---------- */
-let tunnelCache = { t: 0, u: "" };
-function tunnelUrl() {
+/* ---------- Adresse publique HTTPS (tunnel Cloudflare) avec auto-réparation ---------- */
+// L'adresse vient du tunnel lancé par la tâche planifiée (data/tunnel.log) ou, s'il ne répond plus,
+// d'un tunnel de secours lancé par le serveur lui-même. Elle n'est annoncée que si elle répond vraiment.
+const https = require("https");
+const { spawn } = require("child_process");
+const CF_EXE = path.join(ROOT, "cloudflared", "cloudflared.exe");
+let tunnelCache = { t: 0, u: "" }, ownTunnel = { proc: null, url: "", started: 0 }, tunnelOk = { url: "", t: 0 }, tunnelFails = 0;
+function logTunnelUrl() {
   if (Date.now() - tunnelCache.t < 10e3) return tunnelCache.u;
   let u = "";
   try { const m = fs.readFileSync(path.join(DATA_DIR, "tunnel.log"), "utf8").match(/https:\/\/[a-z0-9-]+\.trycloudflare\.com/g); if (m) u = m[m.length - 1]; } catch (e) {}
   tunnelCache = { t: Date.now(), u }; return u;
 }
+function tunnelUrl() { return tunnelOk.url && Date.now() - tunnelOk.t < 6 * 60e3 ? tunnelOk.url : ""; }
+function probe(url) {
+  return new Promise(ok => {
+    if (!url) return ok(false);
+    const r = https.get(url + "/api/ping", { timeout: 8000, headers: { "x-probe": "1" } }, res => { res.resume(); ok(res.statusCode === 200); });
+    r.on("timeout", () => { r.destroy(); ok(false); }); r.on("error", () => ok(false));
+  });
+}
+function startOwnTunnel() {
+  if (ownTunnel.proc || !fs.existsSync(CF_EXE) || Date.now() - ownTunnel.started < 5 * 60e3) return;
+  ownTunnel.started = Date.now(); ownTunnel.url = "";
+  try {
+    const p = spawn(CF_EXE, ["tunnel", "--no-autoupdate", "--url", "http://localhost:" + CFG.port], { windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
+    const grab = b => { const m = String(b).match(/https:\/\/[a-z0-9-]+\.trycloudflare\.com/); if (m && !ownTunnel.url) { ownTunnel.url = m[0]; slog("Tunnel HTTPS de secours ouvert : " + m[0], "systeme", "-"); } };
+    p.stdout.on("data", grab); p.stderr.on("data", grab);
+    p.on("exit", () => { if (ownTunnel.proc === p) ownTunnel = { proc: null, url: "", started: ownTunnel.started }; });
+    ownTunnel.proc = p;
+  } catch (e) { ownTunnel.proc = null; }
+}
+async function checkTunnel() {
+  for (const u of [logTunnelUrl(), ownTunnel.url]) if (u && await probe(u)) { tunnelOk = { url: u, t: Date.now() }; tunnelFails = 0; return; }
+  tunnelFails++;
+  if (tunnelFails >= 2) startOwnTunnel();
+}
+setTimeout(checkTunnel, 20e3); setInterval(checkTunnel, 2 * 60e3);
+process.on("exit", () => { try { ownTunnel.proc && ownTunnel.proc.kill(); } catch (e) {} });
+function isLocalHost(h) { return /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i.test(h || ""); }
 
 /* ---------- Temps réel (Server-Sent Events, par table) ---------- */
 const clients = new Map(); // res -> { tid, sl }
@@ -422,6 +454,11 @@ const server = http.createServer(async (req, res) => {
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("Referrer-Policy", "no-referrer");
   res.setHeader("X-Frame-Options", "DENY");
+  const host = String(req.headers.host || ""), viaTunnel = /\.trycloudflare\.com$/i.test(host) || !!req.headers["cf-connecting-ip"];
+  if (viaTunnel) res.setHeader("Strict-Transport-Security", "max-age=86400");
+  if (req.method === "GET" && !viaTunnel && !isLocalHost(host) && !u.pathname.startsWith("/api/") && tunnelUrl() && !/\.(js|json|png|webmanifest|ico)$/i.test(u.pathname)) {
+    res.writeHead(302, { Location: tunnelUrl() + u.pathname + u.search, "Cache-Control": "no-store" }); return res.end();
+  }
   try {
     if (u.pathname.startsWith("/api/site/")) return siteAdmin(req, res, u, ip);
     if (u.pathname.startsWith("/api/")) {
