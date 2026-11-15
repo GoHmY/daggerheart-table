@@ -212,6 +212,7 @@ function startOwnTunnel() {
     const p = spawn(CF_EXE, ["tunnel", "--no-autoupdate", "--url", "http://localhost:" + CFG.port], { windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
     const grab = b => { const m = String(b).match(/https:\/\/[a-z0-9-]+\.trycloudflare\.com/); if (m && !ownTunnel.url) { ownTunnel.url = m[0]; slog("Tunnel HTTPS de secours ouvert : " + m[0], "systeme", "-"); } };
     p.stdout.on("data", grab); p.stderr.on("data", grab);
+    p.on("error", () => { ownTunnel.proc = null; });
     p.on("exit", () => { if (ownTunnel.proc === p) ownTunnel = { proc: null, url: "", started: ownTunnel.started }; });
     ownTunnel.proc = p;
   } catch (e) { ownTunnel.proc = null; }
@@ -291,7 +292,7 @@ function loadTls() {
   try {
     const key = fs.readFileSync(path.join(TLS_DIR, "key.pem")), cert = fs.readFileSync(path.join(TLS_DIR, "cert.pem"));
     const x = new crypto.X509Certificate(cert); tlsInfo.notAfter = Date.parse(x.validTo);
-    if (tlsSrv) tlsSrv.setSecureContext({ key, cert }); else tlsSrv = tls.createServer({ key, cert, minVersion: "TLSv1.2" }, s => server.emit("connection", s));
+    if (tlsSrv) tlsSrv.setSecureContext({ key, cert }); else { tlsSrv = tls.createServer({ key, cert, minVersion: "TLSv1.2" }); tlsSrv.on("secureConnection", s => server.emit("connection", s)); startHttps(); }
     return true;
   } catch (e) { return false; }
 }
@@ -681,8 +682,8 @@ const server = http.createServer(async (req, res) => {
     fs.createReadStream(fp).pipe(res);
   } catch (e) { console.error(e); send(res, 500, { error: "Erreur serveur." }); }
 });
-const front = net.createServer(sock => {
-  sock.once("data", buf => { sock.pause(); sock.unshift(buf); (buf[0] === 0x16 && tlsSrv ? tlsSrv : server).emit("connection", sock); process.nextTick(() => sock.resume()); });
-  sock.on("error", () => {});
-});
-front.listen(CFG.port, () => console.log("Table Daggerheart en ligne sur le port " + CFG.port + " : " + tableIds().length + " table(s)" + (mailOn() ? ", mails via " + MAIL.user : ", mails désactivés")));
+// HTTPS sur un port à part (CFG.httpsPort, 8443 par défaut), seulement si un certificat est présent.
+function startHttps() { if (!tlsSrv || tlsSrv.listening) return; tlsSrv.on("error", e => slog("HTTPS : " + e.message, "systeme", "-")); tlsSrv.on("tlsClientError", () => {}); tlsSrv.listen(+CFG.httpsPort || 8443); }
+setInterval(startHttps, 60e3);
+process.on("uncaughtException", e => { console.error(e); try { slog("Erreur interne évitée : " + e.message, "systeme", "-"); } catch (x) {} });
+server.listen(CFG.port, () => console.log("Table Daggerheart en ligne sur le port " + CFG.port + " : " + tableIds().length + " table(s)" + (mailOn() ? ", mails via " + MAIL.user : ", mails désactivés")));
