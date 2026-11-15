@@ -193,6 +193,27 @@ table.t tr.sel{background:var(--hope-soft)}
 .gallery button.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
 .gallery svg{width:100%;height:100%}
 ::-webkit-scrollbar{height:8px;width:8px}::-webkit-scrollbar-thumb{background:#3a3060;border-radius:8px}
+.tbar{border:1px solid rgba(183,131,234,.45);border-radius:14px;background:linear-gradient(180deg,rgba(183,131,234,.14),rgba(24,18,42,.92));padding:10px 12px 12px;margin-bottom:14px;display:flex;flex-direction:column;gap:10px}
+.tbar-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.tbar-l{font:700 .68rem var(--f-label,Cinzel,serif);letter-spacing:.16em;text-transform:uppercase;color:#d6b8f5}
+.tbar-n{font:700 1.3rem var(--f-display,serif);color:#fff}.tbar-n small{font-size:.85rem;color:var(--muted,#a79fc2)}
+.fearpips{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:5px;max-width:520px}
+.fearpips span{height:14px;border-radius:3px;transform:skewX(-12deg);border:1px solid var(--fear)}.fearpips span.on{background:var(--fear)}
+.party-h{display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:1px solid rgba(217,173,91,.18)}
+.party-h .tbar-l{color:var(--gold,#d9ad5b)}
+.party{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px}
+.pm{display:flex;flex-direction:column;gap:4px;padding:7px 8px;border-radius:10px;background:rgba(8,6,15,.55);border:1px solid #3a3060;min-width:0}
+.pm.danger{border-color:rgba(242,107,99,.6)}
+.pm-top{display:flex;align-items:center;gap:6px;min-width:0}
+.pm-av{width:22px;height:22px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;font:700 .7rem var(--f-label,Cinzel,serif);color:#fff;overflow:hidden}
+.pm-n{font-weight:700;font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pm-s{font-size:.72rem;color:var(--muted,#a79fc2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pm-bar{height:5px;border-radius:3px;background:#2a2245;overflow:hidden}.pm-bar i{display:block;height:5px}
+.party.open{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+.party.open .pm{flex-direction:row;align-items:center;gap:10px;padding:10px}
+.party.open .pm-av{width:38px;height:38px;font-size:.95rem}
+.party.open .pm-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.pm-alert{font-size:.72rem;font-weight:700;color:var(--hp)}
 </style>
 
 <header class="top"><div class="wrap">
@@ -771,9 +792,8 @@ function genStory(c){const S_=STORY,cl=c.classe||"guerrier";const who=c.name||"C
 function hasStory(c){return !!(c.bg.look||c.bg.links||c.bg.notes||Object.values(c.bg.answers||{}).some(Boolean))}
 function storyBtns(){return `<div class="note" style="margin-bottom:12px"><div class="flexgap" style="justify-content:space-between"><span>Pas d’inspiration ? Générez une histoire complète à partir de votre classe, ascendance et communauté. Relancez autant que vous voulez, puis modifiez ce qui vous plaît.</span><button class="btn sm pri" data-act="randstory" id="randstory">Histoire aléatoire</button></div></div>`}
 /* =================== VUE JOUEUR =================== */
-function publicStrip(){const t=L.table,pub=(t.cds||[]).filter(x=>x.pub);
- return `<section class="box"><div class="flexgap" style="justify-content:space-between"><h2 style="margin:0">Peur du MJ : ${t.fear||0}/12</h2><div class="slots">${Array.from({length:12},(_,i)=>`<span class="slot ${i<(t.fear||0)?"on":""}" style="--c:var(--fear);cursor:default;display:inline-block"></span>`).join("")}</div></div>
- ${pub.length?`<h3>Compte à rebours</h3>${pub.map(x=>`<div class="cd"><span><b>${esc(x.name)}</b></span><span class="chip">${x.v}/${x.max}</span></div>`).join("")}`:""}</section>`}
+function publicStrip(){const t=L.table,pub=(t.cds||[]).filter(x=>x.pub);if(!pub.length)return "";
+ return `<section class="box"><h2>Comptes à rebours</h2>${pub.map(x=>`<div class="cd"><span><b>${esc(x.name)}</b></span><span class="chip">${x.v}/${x.max}</span></div>`).join("")}</section>`}
 function renderHome(){
  const mine=L.chars.filter(c=>L.mode==="local"||c.owner===L.me.id),others=L.chars.filter(c=>L.mode==="db"&&c.owner!==L.me.id);
  const card=c=>{const cl=CLASSES[c.classe];return `<button class="pc" data-open="${c.id}"><div class="pimg">${portrait(c)}<div class="pname"><span>${cl?cl.n:""}${c.sub&&cl?" &middot; "+cl.subs[c.sub].n:""} &middot; Niv. ${c.level}</span><b>${esc(c.name||"Sans nom")}</b></div></div><div class="pbody"><span class="small muted">${c.anc1?ANC[c.anc1].n:""}${c.comm?" &middot; "+COMM[c.comm].n:""}</span>${bars(c)}${c.example?`<span class="chip">Exemple</span>`:""}</div></button>`};
@@ -1008,7 +1028,7 @@ function renderGM(){if(!L.me.canEdit)return `<div class="note fear">L’espace M
 function pendingFear(){const t=L.table,cnt=t.counted||{};let n=0;L.chars.forEach(c=>(c.rolls||[]).forEach(r=>{if(r.fear&&r.ts&&r.ts>(cnt[c.id]||0))n++}));return n}
 function gTable(){const t=L.table;const pf=L.mode==="db"?pendingFear():0;
  return `<div class="grid"><div class="col"><section class="box"><h2>Peur : ${t.fear||0}/12</h2><div class="fearbig">${Array.from({length:12},(_,i)=>`<button class="slot ${i<(t.fear||0)?"on":""}" style="--c:var(--fear)" data-fear="${i}" aria-label="Peur ${i+1}"></button>`).join("")}</div>
- <div class="flexgap" style="margin-top:10px"><button class="btn sm" data-act="fear" data-k="-1">−1</button><button class="btn sm fear" data-act="fear" data-k="1">+1</button><button class="btn sm" data-act="fearrest" data-k="short">Repos court des PJ (+1d4)</button><button class="btn sm" data-act="fearrest" data-k="long">Repos long (+1d4 + nb PJ)</button></div>${pf?`<div class="note fear" style="margin-top:10px"><div class="flexgap" style="justify-content:space-between"><span><b>${pf}</b> jet${pf>1?"s":""} de joueur avec Peur pas encore compté${pf>1?"s":""}.</span><button class="btn sm fear" data-act="countfear">Ajouter ${pf} Peur</button></div></div>`:""}<p class="small muted" id="fearres" style="margin-top:6px">Visible par les joueurs. La Peur se gagne quand un PJ obtient un résultat avec Peur.</p></section>
+ <div class="flexgap" style="margin-top:10px"><button class="btn sm" data-act="fear" data-k="-1">−1</button><button class="btn sm fear" data-act="fear" data-k="1">+1</button><button class="btn sm" data-act="fearrest" data-k="short">Repos court des PJ (+1d4)</button><button class="btn sm" data-act="fearrest" data-k="long">Repos long (+1d4 + nb PJ)</button></div>${pf?`<div class="note fear" style="margin-top:10px"><div class="flexgap" style="justify-content:space-between"><span><b>${pf}</b> jet${pf>1?"s":""} de joueur avec Peur pas encore compté${pf>1?"s":""}.</span><button class="btn sm fear" data-act="countfear">Ajouter ${pf} Peur</button></div></div>`:""}<label class="small flexgap" style="margin-top:10px"><input type="checkbox" data-tp="hideHp" ${t.hideHp?"checked":""} style="width:auto"> Masquer les PV du groupe aux joueurs</label><p class="small muted" id="fearres" style="margin-top:6px">Visible par les joueurs. La Peur se gagne quand un PJ obtient un résultat avec Peur.</p></section>
  <section class="box"><h2>Comptes à rebours</h2>${(t.cds||[]).map((x,i)=>`<div class="cd"><div style="min-width:0"><input data-tp="cds.${i}.name" value="${esc(x.name)}" aria-label="Nom"><div class="flexgap" style="margin-top:6px"><div class="slots">${Array.from({length:x.max},(_,j)=>`<button class="slot ${j<x.v?"on":""}" style="--c:var(--hope)" data-cd="${i}" data-i="${j}" aria-label="Case ${j+1}"></button>`).join("")}</div></div></div>
   <div class="flexgap" style="flex-direction:column"><label class="small flexgap"><input type="checkbox" data-tp="cds.${i}.pub" ${x.pub?"checked":""} style="width:auto">Public</label><button class="btn sm danger" data-act="delcd" data-i="${i}">✕</button></div></div>`).join("")||`<p class="small muted">Aucun compte à rebours.</p>`}
  <div class="flexgap"><input id="cdname" placeholder="Ex. : Le rituel s’achève" style="flex:1 1 180px"><input id="cdmax" type="number" value="6" min="1" max="12" style="width:70px" aria-label="Taille"><button class="btn sm" data-act="addcd">Ajouter</button></div></section></div>
@@ -1042,10 +1062,28 @@ function gRules(){return `<div class="grid ref"><div class="col"><section class=
 function gNotes(){return `<section class="box"><h2>Notes privées du MJ</h2><p class="small muted">${L.mode==="db"?"Visibles par vous seul.":"Enregistrées dans ce navigateur."}</p><textarea data-gm rows="18">${esc(L.gm)}</textarea></section>`}
 
 /* =================== RENDU GLOBAL =================== */
+function partySummary(c){const d=derive(c);if(!d||c.example)return null;const cl=CLASSES[c.classe];
+ return{name:c.name||"Sans nom",classe:c.classe,cls:cl.n,sub:(cl.subs[c.sub]||{}).n||"",level:+c.level||1,hp:+c.hp||0,hpMax:d.hp,color:c.pcol||DOMCOL[cl.dom[0]]||"#7b4fc2",player:(typeof SRV!=="undefined"&&SRV.on&&L.me&&c.owner===L.me.id?SRV.name:"")||"",owner:c.owner||(L.me&&L.me.id)||"",updatedAt:Date.now()}}
+function renderTableBar(){const t=L.table||{},f=Math.max(0,Math.min(12,+t.fear||0)),showHp=t.hideHp!==true;
+ let list;if(L.mode==="db")list=(L.party||[]).filter(m=>m&&m.name);else list=L.chars.filter(c=>!c.example).map(partySummary).filter(Boolean);
+ const mine=m=>L.mode==="db"&&L.me&&m.owner===L.me.id;
+ list=list.slice().sort((a,b)=>(mine(b)-mine(a))||String(a.name).localeCompare(String(b.name)));
+ const open=!!L.partyOpen,shown=open?list:list.filter(m=>!mine(m));
+ const card=m=>{const mx=+m.hpMax||0,left=Math.max(0,mx-(+m.hp||0)),pct=mx?Math.round(100*left/mx):0,col=left<=1?"var(--hp)":left<=mx/2?"var(--hope)":"var(--ok)",bad=showHp&&mx&&left<=1;
+  const hpTxt=showHp?`<div class="pm-bar"><i style="width:${pct}%;background:${col}"></i></div><span class="pm-s" style="color:#d7d0e8">${left}/${mx} PV</span>`:"";
+  const head=`<span class="pm-av" style="background:${esc(m.color||"#7b4fc2")}">${esc(String(m.name||"?").trim().slice(0,1).toUpperCase())}</span>`;
+  return open?`<div class="pm ${bad?"danger":""}">${head}<div class="pm-body"><div class="flexgap" style="justify-content:space-between;flex-wrap:nowrap"><span class="pm-n">${esc(m.name)}${mine(m)?' <span class="pm-s">(vous)</span>':""}</span><span class="pm-s">Niv. ${esc(m.level)}</span></div><span class="pm-s">${esc(m.cls||"")}${m.sub?" · "+esc(m.sub):""}${m.player?" · "+esc(m.player):""}</span>${hpTxt}${bad?`<span class="pm-alert">${left?"Plus qu’un PV":"À terre"}</span>`:""}</div></div>`
+  :`<div class="pm ${bad?"danger":""}"><div class="pm-top">${head}<span class="pm-n">${esc(m.name)}</span></div><span class="pm-s">Niv. ${esc(m.level)} · ${esc(m.cls||"")}</span>${hpTxt}</div>`};
+ return `<section class="tbar" aria-label="Table"><div class="tbar-h"><span class="tbar-l">Peur du MJ</span><span class="tbar-n">${f} <small>/ 12</small></span></div>
+ <div class="fearpips" role="img" aria-label="Peur du MJ : ${f} sur 12">${Array.from({length:12},(_,i)=>`<span class="${i<f?"on":""}"></span>`).join("")}</div>
+ <div class="party-h"><span class="tbar-l">Le groupe</span>${list.length?`<button class="btn sm" data-act="partytoggle" aria-expanded="${open}">${open?"Réduire":"Voir tout"}</button>`:""}</div>
+ ${shown.length?`<div class="party ${open?"open":""}">${shown.map(card).join("")}</div>`:`<p class="small muted" style="margin:0">${L.mode==="db"?"Les personnages des autres joueurs apparaîtront ici dès qu’ils se connecteront.":"Créez des personnages pour voir le groupe ici."}</p>`}
+ ${!showHp?`<p class="small muted" style="margin:0">Le MJ a masqué les PV du groupe.</p>`:""}</section>`}
 function render(){
  document.getElementById("rj").className=L.role==="joueur"?"on":"";document.getElementById("rm").className=L.role==="mj"?"on":"";
  document.getElementById("mode").textContent=L.mode==="db"?"Table partagée":"Version autonome";
  let h;if(L.role==="mj"&&L.view!=="sheet")h=renderGM();else if(L.view==="wizard"&&L.wiz)h=renderWizard();else if(L.view==="sheet")h=renderSheet();else h=renderHome();
+ if(L.role!=="mj")h=renderTableBar()+h;
  document.getElementById("main").innerHTML=h;saveLocal();
 }
 
@@ -1189,6 +1227,7 @@ document.addEventListener("click",e=>{
   case "del":if(!delArm){delArm=true;b.textContent="Confirmer la suppression";setTimeout(()=>{delArm=false;if(b.isConnected)b.textContent="Supprimer ce personnage"},3000);return}
    delArm=false;{const id=c.id;L.chars=L.chars.filter(x=>x.id!==id);L.view="home";if(L.mode==="db")db.doc("chars/"+id).delete().catch(()=>toast("Suppression refusée."));}break;
   case "import":importData(document.getElementById("imptxt").value);return;
+  case "partytoggle":L.partyOpen=!L.partyOpen;render();return;
   case "pdf":downloadPdf(c);return;
   case "pdfof":downloadPdf(L.chars.find(x=>x.id===b.dataset.k));return;
   case "dlchar":download((c.name||"personnage").replace(/[^\w\-]+/g,"_")+"-daggerheart.json",c);return;

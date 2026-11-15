@@ -165,6 +165,7 @@ function canRead(p, w) {
 }
 function canWrite(p, w) {
   const s = p.split("/");
+  if (s[0] === "table" && s[1] === "party") return s.length === 3 && (w.mj || s[2].startsWith(w.pid + "~"));
   if (s[0] === "table") return w.mj;
   if (s[0] === "players") return s.length >= 2 && (s[1] === w.pid || w.mj);
   if (s[0] === "data" && s[1] === "users") return s[2] === w.pid;
