@@ -308,7 +308,7 @@ async function ensureCert() {
 }
 async function checkHttps() { tlsInfo.ok = !!tlsSrv && await probe("https://" + DOMAIN); tlsInfo.t = Date.now(); }
 setTimeout(async () => { await ensureCert(); checkHttps(); }, 15e3);
-setInterval(ensureCert, 12 * 3600e3); setInterval(checkHttps, 3 * 60e3);
+setInterval(() => { if (!tlsSrv || /^Échec/.test(tlsInfo.last)) ensureCert(); }, 20 * 60e3); setInterval(ensureCert, 12 * 3600e3); setInterval(checkHttps, 3 * 60e3);
 const httpsUp = () => tlsInfo.ok && Date.now() - tlsInfo.t < 10 * 60e3;
 
 /* ---------- Temps réel (Server-Sent Events, par table) ---------- */
@@ -551,7 +551,7 @@ const server = http.createServer(async (req, res) => {
     if (u.pathname.startsWith("/api/")) {
       const H = k => req.headers[k] || "";
       if (u.pathname === "/api/local/status") { const r = String(req.socket.remoteAddress || "").replace(/^::ffff:/, ""); if ((r !== "127.0.0.1" && r !== "::1") || req.headers["cf-connecting-ip"]) return send(res, 404, { error: "Introuvable." }); return send(res, 200, { online: clients.size, uptime: Math.round(process.uptime()) }); }
-      if (u.pathname === "/api/ping") { const tid = findTable(H("x-table")); return send(res, 200, { ok: true, needTable: true, open: tid ? tab(tid).open !== false : true, table: tid ? tab(tid).name : "", publicUrl: tunnelUrl(), mail: mailOn(), v: 4 }); }
+      if (u.pathname === "/api/ping") { const tid = findTable(H("x-table")); return send(res, 200, { ok: true, needTable: true, open: tid ? tab(tid).open !== false : true, table: tid ? tab(tid).name : "", publicUrl: tunnelUrl(), mail: mailOn(), https: { cert: !!tlsSrv, listening: !!(tlsSrv && tlsSrv.listening), reachable: tlsInfo.ok, info: tlsInfo.last, node: process.version }, v: 4 }); }
       if (tooMany(ip)) return send(res, 429, { error: "Trop d’essais, réessayez dans 10 minutes." });
 
       /* Connexion et création de compte */
