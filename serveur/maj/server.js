@@ -368,7 +368,7 @@ function accountOp(tid, op, q, b, actor, ip, self) {
       if (dtid !== tid) log(dtid, "Fiche « " + ((c && c.name) || id) + " » reçue de la table " + tab(tid).name + " par " + actor, rec(dtid, to).n, ip);
       return [200, { ok: true }];
     }
-    case "delchar": { const from = String(q.get("from") || ""), id = String(q.get("id") || ""); if (!SEG.test(from) || !SEG.test(id)) return [400, { error: "Requête invalide." }]; const k = NS(tid) + "players/" + from + "/chars/" + id; const c = store[k]; if (!c) return [404, { error: "Fiche introuvable." }]; delete store[k]; persist(); broadcast(tid, "players/" + from + "/chars/" + id); log(tid, "Fiche « " + (c.name || id) + " » supprimée par " + actor, from, ip); return [200, { ok: true }]; }
+    case "delchar": { const from = String(q.get("from") || ""), id = String(q.get("id") || ""); if (!SEG.test(from) || !SEG.test(id)) return [400, { error: "Requête invalide." }]; const k = NS(tid) + "players/" + from + "/chars/" + id; const c = store[k]; if (!c) return [404, { error: "Fiche introuvable." }]; delete store[k]; const pk = "table/party/" + from + "~" + id; if (store[NS(tid) + pk] !== undefined) { delete store[NS(tid) + pk]; broadcast(tid, pk); } persist(); broadcast(tid, "players/" + from + "/chars/" + id); log(tid, "Fiche « " + (c.name || id) + " » supprimée par " + actor, from, ip); return [200, { ok: true }]; }
     case "clearlog": store[NS(tid) + "_log"] = []; log(tid, "Journal vidé par " + actor, "", ip); return [200, { ok: true }];
   }
   return null;
@@ -686,5 +686,8 @@ const server = http.createServer(async (req, res) => {
 // HTTPS sur un port à part (CFG.httpsPort, 8443 par défaut), seulement si un certificat est présent.
 function startHttps() { if (!tlsSrv || tlsSrv.listening) return; tlsSrv.on("error", e => slog("HTTPS : " + e.message, "systeme", "-")); tlsSrv.on("tlsClientError", () => {}); tlsSrv.listen(+CFG.httpsPort || 8443); }
 setInterval(startHttps, 60e3);
+// Bandeau du groupe : retire les résumés dont la fiche n'existe plus (suppression, transfert, compte effacé).
+function pruneParty() { let n = 0; for (const tid of tableIds()) { const pre = NS(tid) + "table/party/"; for (const k of keysWith(pre)) { const m = k.slice(pre.length).match(/^([^~\/]+)~([^\/]+)$/); if (m && store[NS(tid) + "players/" + m[1] + "/chars/" + m[2]] === undefined) { delete store[k]; broadcast(tid, "table/party/" + m[1] + "~" + m[2]); n++; } } } if (n) persist(); }
+setInterval(() => { try { pruneParty(); } catch (e) {} }, 30e3); setTimeout(() => { try { pruneParty(); } catch (e) {} }, 5e3);
 process.on("uncaughtException", e => { console.error(e); try { slog("Erreur interne évitée : " + e.message, "systeme", "-"); } catch (x) {} });
 server.listen(CFG.port, () => console.log("Table Daggerheart en ligne sur le port " + CFG.port + " : " + tableIds().length + " table(s)" + (mailOn() ? ", mails via " + MAIL.user : ", mails désactivés")));
