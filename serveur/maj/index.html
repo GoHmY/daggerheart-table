@@ -667,7 +667,7 @@ async function connect(){
   }
   db.collection("table/party").onSnapshot(s=>{L.party=s.docs.map(d=>Object.assign({id:d.id},d.data()));softRender()},()=>{});
   db.doc("table/state").onSnapshot(s=>{if(s.exists)L.table=Object.assign({fear:0,cds:[],adv:[],pcs:4,adj:0,note:""},s.data());softRender()},()=>{});
-  db.doc("data/users/"+id+"/gm/notes").get().then(s=>{if(s.exists){L.gm=s.data().text||"";softRender()}}).catch(()=>{});
+  scnLoad(id);db.doc("data/users/"+id+"/gm/notes").get().then(s=>{if(s.exists){L.gm=s.data().text||"";softRender()}}).catch(()=>{});
   render();
  }catch(e){}
 }
@@ -1291,10 +1291,51 @@ function importData(txt){try{let x=JSON.parse(txt);if(x&&x.chars)x=x.chars;x=Arr
  x.forEach(o=>{if(!o||!o.classe)return;const c=Object.assign(blank(),normChar(o),{id:uid(),owner:L.me.id,example:false,photo:typeof o.photo==="string"&&o.photo.startsWith("data:image/")?o.photo:""});L.chars.push(c);saveChar(c);n++});
  if(!n)throw 0;toast(n+" personnage"+(n>1?"s":"")+" importé"+(n>1?"s":"")+".");L.view="home";render()}catch(e){const r=document.getElementById("impres");if(r){r.className="warn small";r.textContent="Fichier ou texte invalide."}}}
 
+/* =================== SCÉNARIO (MJ) : actes générés par IA, modifiables =================== */
+let L_SCN={title:"",pitch:"",tone:"",acts:[]},SCN_BUSY={},sTimer;
+try{const o=JSON.parse(localStorage.getItem("dh-scn")||"null");if(o&&Array.isArray(o.acts))L_SCN=o}catch(e){}
+function saveScn(){try{localStorage.setItem("dh-scn",JSON.stringify(L_SCN))}catch(e){}if(L.mode!=="db"||!db||!L.me)return;clearTimeout(sTimer);sTimer=setTimeout(async()=>{try{await db.doc("data/users/"+L.me.id+"/gm/scenario").set(JSON.parse(JSON.stringify(L_SCN)))}catch(e){}},700)}
+function scnLoad(id){if(!db)return;db.doc("data/users/"+id+"/gm/scenario").get().then(s=>{if(s.exists){const d=s.data();if(d&&Array.isArray(d.acts)){L_SCN=d;try{localStorage.setItem("dh-scn",JSON.stringify(d))}catch(e){}softRender()}}}).catch(()=>{})}
+async function scnAI(sys,user){const r=await fetch("https://text.pollinations.ai/openai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"openai",temperature:0.7,messages:[{role:"system",content:sys},{role:"user",content:user}]})});if(!r.ok)throw new Error("Service IA indisponible ("+r.status+"), réessayez dans un instant.");const j=await r.json();return String(j.choices?.[0]?.message?.content||"").replace(/\*\*/g,"").replace(/^#{1,6}\s*(.+?)\s*$/gm,(m,t)=>/^(LIEU|AMBIANCE|D[ÉE]ROUL|PNJ|ADVERSAIRES|OBSTACLES|BUTIN|TRANSITION)/i.test(t)?t.toUpperCase().replace(/\s*:?$/," :"):t).trim()}
+const SCN_SYS="Tu es un maître du jeu expérimenté qui prépare des scénarios pour le jeu de rôle Daggerheart (fantasy). Tu écris en français, de façon concrète, évocatrice et jouable autour d'une table. Pas d'emojis. Utilise les termes de Daggerheart : PJ, Espoir, Peur, adversaires, rangs 1 à 4, comptes à rebours, environnements.";
+function scnCtx(i){const S=L_SCN;let c="";if(S.title)c+="Titre du scénario : "+S.title+"\n";if(S.pitch)c+="Idée générale : "+S.pitch+"\n";if(S.tone)c+="Ton et contraintes : "+S.tone+"\n";
+ const prev=S.acts.slice(0,i).map((a,k)=>"Acte "+(k+1)+" ("+(a.title||"sans titre")+") : "+(a.idea||"")+(a.text?" / Résumé : "+a.text.slice(0,500):"")).join("\n");if(prev)c+="\nActes précédents :\n"+prev+"\n";return c}
+function scnSet(i,k,v){const a=L_SCN.acts[i];if(!a)return;a[k]=v;saveScn()}
+function scnTop(k,v){L_SCN[k]=v;saveScn()}
+function scnAdd(){L_SCN.acts.push({id:uid(),title:"Acte "+(L_SCN.acts.length+1),idea:"",text:"",img:""});saveScn();render();setTimeout(()=>document.querySelector(`[data-scn-idea="${L_SCN.acts.length-1}"]`)?.focus(),50)}
+let SCN_ARM={};
+function scnDel(i,btn){const a=L_SCN.acts[i];if(!a)return;if(!SCN_ARM[a.id]||Date.now()-SCN_ARM[a.id]>4000){SCN_ARM[a.id]=Date.now();btn.textContent="Confirmer ?";btn.classList.add("danger");return}L_SCN.acts.splice(i,1);saveScn();render();toast("Acte supprimé.")}
+function scnMove(i,d){const A=L_SCN.acts,j=i+d;if(j<0||j>=A.length)return;[A[i],A[j]]=[A[j],A[i]];saveScn();render()}
+async function scnGenAct(i){const a=L_SCN.acts[i];if(!a)return;if(!a.idea.trim()&&!L_SCN.pitch.trim()){toast("Écrivez d’abord votre idée pour cet acte.");return}SCN_BUSY[a.id]="texte";render();
+ try{const t=await scnAI(SCN_SYS,scnCtx(i)+"\nRédige l'acte "+(i+1)+(a.title?" intitulé « "+a.title+" »":"")+" à partir de cette idée du MJ : "+(a.idea||"suis logiquement les actes précédents")+"\n\nStructure exactement avec ces rubriques, chacune sur sa propre ligne en majuscules suivie de ':' :\nLIEU ET PAYSAGE : (description visuelle et sensorielle du décor)\nAMBIANCE : \nDÉROULÉ : (3 à 5 étapes numérotées)\nPNJ : (nom, attitude, ce qu'ils veulent)\nADVERSAIRES : (créatures de Daggerheart adaptées, avec leur rang)\nOBSTACLES ET JETS : (jets de traits suggérés avec Difficulté)\nBUTIN : \nTRANSITION : (comment amener l'acte suivant)\n\nReste concis et cohérent : 2 à 4 phrases par rubrique, pas de titre général, pas de markdown.");
+  a.text=t;saveScn()}catch(e){toast(e.message||"Génération impossible.")}delete SCN_BUSY[a.id];render()}
+async function scnGenAll(){if(!L_SCN.pitch.trim()){toast("Écrivez d’abord l’idée générale du scénario.");return}const n=Math.max(1,Math.min(8,+(document.getElementById("scnn")?.value)||3));SCN_BUSY.all=1;render();
+ try{const t=await scnAI(SCN_SYS,scnCtx(0)+"\nPropose un découpage du scénario en "+n+" actes. Réponds uniquement par "+n+" lignes au format exact : titre court et évocateur (3 à 6 mots, sans le mot Acte) | idée de l'acte en 2 phrases (lieu, enjeu, rebondissement).");
+  const rows=t.split(/\n+/).map(l=>l.replace(/^\s*(?:[-*\d.)]+\s*)?(?:acte\s*\d+\s*[:.\-–]\s*)?/i,"").trim()).filter(l=>l.includes("|")).slice(0,n);
+  if(!rows.length)throw new Error("Réponse de l’IA inexploitable, réessayez.");
+  rows.forEach(l=>{let[ti,...r]=l.split("|").map(x=>x.replace(/\*+/g,"").trim());ti=ti.replace(/^\s*acte\s*[IVX\d]+\s*[:.\-–]?\s*/i,"").trim();L_SCN.acts.push({id:uid(),title:ti||"Acte "+(L_SCN.acts.length+1),idea:r.join(" ").trim(),text:"",img:""})});saveScn();toast(rows.length+" actes ajoutés. Générez le détail de chacun.")}catch(e){toast(e.message||"Génération impossible.")}delete SCN_BUSY.all;render()}
+async function scnGenImg(i){const a=L_SCN.acts[i];if(!a)return;const m=(a.text||"").match(/LIEU ET PAYSAGE\s*:?\s*([\s\S]*?)(?=\n\s*[A-ZÀ-Ý ]{4,}\s*:|$)/);const place=(m?m[1]:a.idea||a.title).replace(/\s+/g," ").slice(0,380);if(!place.trim()){toast("Générez ou écrivez d’abord le lieu de l’acte.");return}
+ SCN_BUSY[a.id]="image";render();const url="https://image.pollinations.ai/prompt/"+encodeURIComponent("Fantasy landscape, realistic cinematic concept art, "+place+", wide shot, natural light, highly detailed, no text")+"?width=1024&height=512&nologo=true&seed="+Math.floor(Math.random()*1e6);
+ try{const r=await fetch(url);if(r.status===402||r.status===429)throw new Error("Limite gratuite atteinte : une image toutes les 45 secondes environ. Réessayez dans un instant.");if(!r.ok||!/^image/.test(r.headers.get("content-type")||""))throw new Error("Image indisponible pour l’instant, réessayez.");const bm=await createImageBitmap(await r.blob()),c=document.createElement("canvas");c.width=800;c.height=400;const g=c.getContext("2d"),k=Math.max(800/bm.width,400/bm.height);g.drawImage(bm,(800-bm.width*k)/2,(400-bm.height*k)/2,bm.width*k,bm.height*k);a.img=c.toDataURL("image/jpeg",.78);saveScn()}catch(e){toast(e.message||"Image indisponible.")}delete SCN_BUSY[a.id];render()}
+function scnFmt(t){return esc(t).replace(/^([A-ZÀ-Ý][A-ZÀ-Ý' ]{3,})\s*:/gm,'<b style="color:var(--gold)">$1 :</b>')}
+function gScenario(){const S=L_SCN,busyAll=!!SCN_BUSY.all;
+ return `<div style="max-width:900px"><section class="box"><h2>Scénario</h2><p class="small muted">Visible par vous seul. Donnez votre idée, l’IA rédige, vous modifiez tout. Ajoutez, supprimez ou réordonnez les actes librement.</p>
+ <label class="f">Titre du scénario<input value="${esc(S.title)}" oninput="scnTop('title',this.value)" placeholder="Ex. : La Brume de Port-Sombre"></label>
+ <label class="f" style="margin-top:8px">Idée générale<textarea rows="3" oninput="scnTop('pitch',this.value)" placeholder="Ex. : Un village de pêcheurs disparaît dans la brume chaque nuit de pleine lune. Un culte des Profondeurs est derrière.">${esc(S.pitch)}</textarea></label>
+ <label class="f" style="margin-top:8px">Ton et contraintes (facultatif)<input value="${esc(S.tone||"")}" oninput="scnTop('tone',this.value)" placeholder="Ex. : horreur légère, niveau 1, 4 joueurs, une soirée"></label>
+ <div class="flexgap" style="margin-top:10px"><label class="f" style="width:110px">Nombre d’actes<input id="scnn" type="number" min="1" max="8" value="3"></label><button class="btn pri" onclick="scnGenAll()" ${busyAll?"disabled":""}>${busyAll?"L’IA découpe le scénario…":"Proposer les actes avec l’IA"}</button><button class="btn" onclick="scnAdd()">Ajouter un acte vide</button></div></section>
+ ${S.acts.map((a,i)=>{const b=SCN_BUSY[a.id];return `<section class="box"><div class="flexgap" style="justify-content:space-between"><span class="chip">Acte ${i+1}</span><span class="flexgap"><button class="btn sm" onclick="scnMove(${i},-1)" ${i?"":"disabled"} aria-label="Monter">↑</button><button class="btn sm" onclick="scnMove(${i},1)" ${i<S.acts.length-1?"":"disabled"} aria-label="Descendre">↓</button><button class="btn sm" onclick="scnDel(${i},this)">Supprimer</button></span></div>
+ <label class="f" style="margin-top:8px">Titre<input value="${esc(a.title)}" oninput="scnSet(${i},'title',this.value)"></label>
+ <label class="f" style="margin-top:8px">Votre idée pour l’IA (prompt)<textarea data-scn-idea="${i}" rows="2" oninput="scnSet(${i},'idea',this.value)" placeholder="Ex. : Paysage : falaises noires et phare éteint. Les PJ arrivent de nuit, un enfant a disparu, le gardien du phare ment.">${esc(a.idea)}</textarea></label>
+ <div class="flexgap" style="margin-top:8px"><button class="btn pri sm" onclick="scnGenAct(${i})" ${b?"disabled":""}>${b==="texte"?"Rédaction en cours…":a.text?"Régénérer l’acte":"Générer l’acte avec l’IA"}</button><button class="btn sm" onclick="scnGenImg(${i})" ${b?"disabled":""}>${b==="image"?"Image en cours…":a.img?"Nouvelle image du lieu":"Image du lieu (IA)"}</button>${a.img?`<button class="btn sm" onclick="scnSet(${i},'img','');render()">Retirer l’image</button>`:""}</div>
+ ${a.img?`<img src="${esc(a.img)}" alt="Lieu de l’acte ${i+1}" loading="lazy" style="width:100%;aspect-ratio:2/1;object-fit:cover;border-radius:12px;margin-top:10px;display:block">`:""}
+ <details class="fold" ${a.text?"open":""} style="margin-top:10px"><summary>Texte de l’acte (modifiable)</summary><textarea rows="${Math.min(30,Math.max(8,(a.text||"").split("\n").length+2))}" oninput="scnSet(${i},'text',this.value)" style="margin-top:8px" placeholder="Générez avec l’IA ou écrivez librement.">${esc(a.text)}</textarea></details></section>`}).join("")}
+ ${S.acts.length?`<div class="flexgap" style="margin:4px 0 16px"><button class="btn" onclick="scnAdd()">Ajouter un acte</button></div>`:""}</div>`}
+
 /* =================== VUE MJ =================== */
-const GTABS=[["table","Table"],["rencontre","Rencontre"],["butin","Butin"],["regles","Règles"],["notes","Notes privées"]];
+const GTABS=[["table","Table"],["rencontre","Rencontre"],["butin","Butin"],["scenario","Scénario"],["regles","Règles"],["notes","Notes privées"]];
 function renderGM(){if(!L.me.canEdit)return `<div class="note fear">L’espace MJ est réservé au propriétaire et aux éditeurs de cette page.</div>`;
- const tab={table:gTable,rencontre:gEnc,butin:()=>`<div style="max-width:820px">${gLoot()}</div>`,regles:gRules,notes:gNotes,admin:gAdmin}[L.gtab]||gTable;
+ const tab={table:gTable,rencontre:gEnc,butin:()=>`<div style="max-width:820px">${gLoot()}</div>`,scenario:gScenario,regles:gRules,notes:gNotes,admin:gAdmin}[L.gtab]||gTable;
  return `<nav class="tabs">${(SRV.on?GTABS.concat([["admin","Admin"]]):GTABS).map(([k,n])=>`<button class="${L.gtab===k?"on":""}" data-gtab="${k}">${n}</button>`).join("")}</nav>${tab()}`}
 function pendingFear(){const t=L.table,cnt=t.counted||{};let n=0;L.chars.forEach(c=>(c.rolls||[]).forEach(r=>{if(r.fear&&r.ts&&r.ts>(cnt[c.id]||0))n++}));return n}
 function gTable(){const t=L.table;const pf=L.mode==="db"?pendingFear():0;
